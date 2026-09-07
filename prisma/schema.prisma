@@ -1,0 +1,18 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Lead {
+  id          Int      @id @default(autoincrement())
+  telegramId  String   @unique   // Telegram user ID
+  name        String?  // Optional name
+  stage       String   @default("new") // e.g., new, contacted, qualified, closed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  // Add any additional fields you need for analytics
+}
