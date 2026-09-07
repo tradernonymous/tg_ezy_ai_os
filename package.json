@@ -2,32 +2,35 @@
   "name": "tg-ezy-ai-os",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
-  "workspaces": ["frontend"],
   "scripts": {
-    "build": "npm run build:backend && npm run build:frontend",
+    "build": "npm run build:backend",
     "build:backend": "npm run tsc",
-    "build:frontend": "npm run build --workspace=frontend",
     "tsc": "tsc",
     "dev": "concurrently \"ts-node-dev src/server.ts\" \"ts-node-dev src/bot.ts\"",
-    "dev:frontend": "npm run dev --workspace=frontend",
     "start": "npm run build && npm run start:prod",
     "start:prod": "concurrently \"node dist/server.js\" \"node dist/bot.js\"",
     "lint": "eslint . --ext .ts",
-    "test": "echo \"No tests yet\""
+    "test": "echo \"No tests yet\"",
+    "postinstall": "prisma skills sync || exit 0"
   },
   "dependencies": {
+    "concurrently": "^8.2.2",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "telegraf": "^4.15.2",
+    "node-fetch": "^2.7.0",
     "openai": "^4.27.0",
-    "concurrently": "^8.2.2"
+    "telegraf": "^4.15.2"
   },
   "devDependencies": {
-    "typescript": "^5.5.2",
+    "@prisma/client": "^7.10.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.5.0",
+    "@typescript-eslint/eslint-plugin": "^8.70.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-import": "^2.29.1",
+    "prisma": "^8.0.0-rc.13",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "eslint": "^9.5.0",
-    "eslint-plugin-import": "^2.29.1"
+    "typescript": "^5.5.2"
   }
 }

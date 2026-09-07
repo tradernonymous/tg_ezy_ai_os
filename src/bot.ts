@@ -1,5 +1,3 @@
-console.log('Bot init, env token length:', (process.env.BOT_TOKEN || '').length);
-
 import { Telegraf } from 'telegraf';
 import * as dotenv from 'dotenv';
 import { generateResponse } from './aiProvider';
