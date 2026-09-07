@@ -1,0 +1,33 @@
+{
+  "name": "tg-ezy-ai-os",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": ["frontend"],
+  "scripts": {
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "npm run tsc",
+    "build:frontend": "npm run build --workspace=frontend",
+    "tsc": "tsc",
+    "dev": "concurrently \"ts-node-dev src/server.ts\" \"ts-node-dev src/bot.ts\"",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "start": "npm run build && npm run start:prod",
+    "start:prod": "concurrently \"node dist/server.js\" \"node dist/bot.js\"",
+    "lint": "eslint . --ext .ts",
+    "test": "echo \"No tests yet\""
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "telegraf": "^4.15.2",
+    "openai": "^4.27.0",
+    "concurrently": "^8.2.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.2",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "eslint": "^9.5.0",
+    "eslint-plugin-import": "^2.29.1"
+  }
+}
