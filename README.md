@@ -1,16 +1,57 @@
-# 🚀 TG Ezy AI OS
+<div align="center">
 
-> **Telegram-first AI Marketing Command Center** — a free-stack platform where a Telegram bot runs your whole marketing life: lead capture, CRM pipeline, content tools, and a **unified multi-platform inbox** — all powered by Mistral AI, with an Attio-style dashboard. Now with **per-account workspaces**: sign in via **Google · Telegram · Magic Key** and every account gets its own leads, pipeline, tiers and inbox.
+<img src="img/readme-banner.svg" alt="EzyViral OS — Telegram-first AI marketing command center" width="100%">
 
-<p align="center">
-  <img src="https://img.shields.io/badge/bot-Telegraf-2CA5E0?style=flat-square&logo=telegram" alt="Telegraf" />
-  <img src="https://img.shields.io/badge/api-Express-000000?style=flat-square&logo=express" alt="Express" />
-  <img src="https://img.shields.io/badge/ai-Mistral%20Free-orange?style=flat-square" alt="Mistral" />
-  <img src="https://img.shields.io/badge/lang-TypeScript-3178C6?style=flat-square&logo=typescript" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/db-JSON%20Store-005C5C?style=flat-square" alt="JSON store" />
-  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT license" />
-</p>
+<br><br>
 
+**One Telegram chat. One dashboard. Your entire marketing operation.** &nbsp;🛸
+
+Lead capture → CRM pipeline → AI content → unified multi-channel inbox.<br>
+Free stack, free tier, no card. &nbsp;✨
+
+<br>
+
+[![Live app](https://img.shields.io/badge/%E2%96%B6_live_app-0BD97E?style=for-the-badge&labelColor=05030f)](https://tg-ezy-ai-os-young-blossom-4821.fly.dev/home)
+[![Quick start](https://img.shields.io/badge/%F0%9F%93%96_quick_start-F4C63D?style=for-the-badge&labelColor=05030f)](#-quick-start)
+[![License](https://img.shields.io/badge/%F0%9F%93%84_MIT-8b5cf6?style=for-the-badge&labelColor=05030f)](LICENSE)
+
+<br>
+
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?style=flat-square&logo=express&logoColor=white)
+![Telegraf](https://img.shields.io/badge/Telegraf-2CA5E0?style=flat-square&logo=telegram&logoColor=white)
+![Mistral](https://img.shields.io/badge/Mistral_AI-FF7000?style=flat-square&logo=mistralai&logoColor=white)
+![Fly.io](https://img.shields.io/badge/Fly.io-8B5CF6?style=flat-square&logo=flydotio&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
+![JSON store](https://img.shields.io/badge/JSON_store-005C5C?style=flat-square)
+
+<br>
+
+### 🧭 &nbsp;Jump to
+
+<table>
+<tr>
+<td align="center"><a href="#-what-this-is"><b>✨<br>What this is</b></a></td>
+<td align="center"><a href="#%EF%B8%8F-architecture"><b>🏗️<br>Architecture</b></a></td>
+<td align="center"><a href="#-features"><b>🧭<br>Features</b></a></td>
+<td align="center"><a href="#-quick-start"><b>🚀<br>Quick start</b></a></td>
+</tr>
+<tr>
+<td align="center"><a href="#%EF%B8%8F-rest-api"><b>🛠️<br>REST API</b></a></td>
+<td align="center"><a href="#-environment-variables"><b>🌍<br>Env vars</b></a></td>
+<td align="center"><a href="#-monetization-model-5-tiers--shared-by-bot--web"><b>💳<br>Plans</b></a></td>
+<td align="center"><a href="#-deployment-docker--flyio"><b>🐳<br>Deploy</b></a></td>
+</tr>
+</table>
+
+</div>
+
+<br>
+
+> [!TIP]
+> **Try it in 60 seconds** — open the [live app](https://tg-ezy-ai-os-young-blossom-4821.fly.dev/home), sign in with Google, Telegram or a Magic Key emailed to you, and the free workspace is yours. No card, no install.
+
+<br>
 ---
 
 ## ✨ What this is
@@ -23,6 +64,75 @@ One Telegram chat + one web dashboard = your whole marketing operation:
 - **🔐 Accounts & plans** — web login with **Google, Telegram Login Widget or Magic Key (dev-preview codes)**. Sessions are HMAC-signed cookies (`__Host-` in prod, 7-day expiry, no new deps). Each account has its own data; the first account **adopts** the existing demo data as its owner workspace. **Five tiers — Free · Hobby · Marketer · Navigator · Thinker** — gate every tool on the client *and* the server.
 
 Every tool works **two ways**: tap a button *or* type a command. Results come with **one-tap follow-ups**, and the whole thing is gated by a **5-tier plan** you control. **Payments are live**: Stripe Card Checkout and manual USDT from the dashboard Plans modal and the bot's `/plans` — drop your keys in and it just works.
+
+---
+
+## 🏗️ Architecture
+
+> One process pair — a Telegraf bot and an Express API — sharing one JSON data layer and one design system.
+
+```mermaid
+flowchart TD
+    subgraph clients [" 👥  Clients "]
+        TG["📱 Telegram bot"]
+        WEB["🖥️ Web dashboard"]
+        LAND["🛸 Landing page"]
+    end
+
+    subgraph api [" ⚙️  Express API "]
+        AUTH["🔐 Auth<br/>Google · Telegram · Magic Key"]
+        REST["🛠️ REST<br/>leads · inbox · stats"]
+        AI["✦ AI proxy<br/>chat · tools"]
+        SEO["🌍 robots · sitemap"]
+    end
+
+    subgraph data [" 🗂️  Data layer "]
+        STATE["state.json<br/>atomic + .bak recovery"]
+        LEADS["leads.json"]
+        CONTENT["content.json<br/>draft → approved → published"]
+        CONV["conversations.json"]
+    end
+
+    MISTRAL["🧠 Mistral AI<br/>free tier"]
+
+    TG --> AUTH
+    WEB --> AUTH
+    LAND --> SEO
+    AUTH --> REST
+    REST --> STATE
+    REST --> LEADS
+    REST --> CONTENT
+    REST --> CONV
+    WEB --> AI
+    TG --> AI
+    AI --> MISTRAL
+
+    classDef c fill:#141033,stroke:#0BD97E,stroke-width:1px,color:#f6f4ff
+    classDef a fill:#141033,stroke:#8b5cf6,stroke-width:1px,color:#f6f4ff
+    classDef d fill:#141033,stroke:#F4C63D,stroke-width:1px,color:#f6f4ff
+    classDef x fill:#1a1040,stroke:#FF7000,stroke-width:1px,color:#f6f4ff
+    class TG,WEB,LAND c
+    class AUTH,REST,AI,SEO a
+    class STATE,LEADS,CONTENT,CONV d
+    class MISTRAL x
+```
+
+<br>
+
+### 🎨 Design system
+
+The landing page is built on **one continuous structural spine**, not a stack of independent sections.
+
+| Piece | What it does |
+|:--|:--|
+| 🧵 **`VisualSpine`** | A single page-level rail (`#spine`) spanning the whole document. Never repeated per section, never restarted. |
+| ⚓ **`.rule` anchors** | Hairline section boundaries with a node at the spine intersection. Brightens on scroll-in. |
+| 📏 **Hairline system** | One language for every boundary — `1px`, `rgba(233,230,255,.065)`, consistent alignment. |
+| 📱 **Responsive rail** | Never hidden on small screens — relocates into the gutter (14px tablet, 12px phone), clear of all content. |
+| 🎛️ **Uniform controls** | Every button and input shares `--control-h: 48px`. |
+| 🔎 **GEO / SEO** | JSON-LD graph — `Organization`, `WebSite`, `SoftwareApplication`, `FAQPage` — matched to a visible FAQ section. |
+
+<br>
 
 ---
 
@@ -106,6 +216,9 @@ The bot prints **"Bot started"** and the API is at `http://localhost:3000` → s
 
 ## 🧰 Bot commands
 
+<details>
+<summary><b>🧰 &nbsp;Show the full command reference</b></summary>
+
 | Command | Effect |
 |---|---|
 | `/start` `/help` | Welcome + full help menu |
@@ -129,9 +242,15 @@ The bot prints **"Bot started"** and the API is at `http://localhost:3000` → s
 
 **Admin-only:** `/mkcode trial <days> [count] [uses]` · `/mkcode 1mo [count] [uses]` · `/codes` · `/revokecode CODE` · `/settrial <1-30>` · `/confirmpay <uid> <tier>` · `/broadcast <message>`
 
+
+</details>
+
 ---
 
 ## 🛠️ REST API
+
+<details>
+<summary><b>🛠️ &nbsp;Show all endpoints and example payloads</b></summary>
 
 > ⚠️ **Auth:** every `/api/*` route except `/api/auth/*` (and the static pages) requires the session cookie set by `/api/auth/*`. `/dashboard` redirects to `/login` when not signed in. Tools are additionally **server-gated by plan tier**.
 
@@ -174,9 +293,15 @@ curl http://localhost:3000/api/stats
 
 Security & robustness: JSON body **size limit** (100kb), **rate limiting** on `/api/chat` and inbox replies, input **validation/sanitization**, atomic JSON writes with `.bak` recovery, AI client with **timeout + retry/backoff**.
 
+
+</details>
+
 ---
 
 ## 🌍 Environment variables
+
+<details>
+<summary><b>🌍 &nbsp;Show every variable</b></summary>
 
 | Var | Default | Purpose |
 |---|---|---|
@@ -206,9 +331,15 @@ Security & robustness: JSON body **size limit** (100kb), **rate limiting** on `/
 | `USDT_ADDRESS` | — | TRC20 address — offers manual USDT checkout (confirmed by admin via `/confirmpay`) |
 | `DATA_DIR` | `<project>/db` | Where JSON stores live |
 
+
+</details>
+
 ---
 
 ## 🗂️ Project layout
+
+<details>
+<summary><b>🗂️ &nbsp;Show the file tree</b></summary>
 
 ```
 src/
@@ -238,6 +369,9 @@ db/
   conversations.json  # Inbox threads (created on first seed)
   magic.json      # One-time magic codes (created on first request)
 ```
+
+
+</details>
 
 ---
 
@@ -289,6 +423,9 @@ CI (`.github/workflows/ci.yml`, **Node 22**, `actions/checkout`/`setup-node` v5)
 
 ## 🧪 Development workflow
 
+<details>
+<summary><b>🧪 &nbsp;Show the workflow</b></summary>
+
 1. **`npm run dev`** — hot-reload bot + API (`ts-node-dev`).
 2. **`npm run tsc`** — type-check / compile to `dist/`.
 3. **`npm test`** — compiles, then runs the `node:test` suite via `scripts/run-tests.mjs` (auto-discovers `dist/__tests__/*.test.js`; works on Node 18+, no glob issues on Windows or CI).
@@ -297,15 +434,24 @@ CI (`.github/workflows/ci.yml`, **Node 22**, `actions/checkout`/`setup-node` v5)
 
 > ⚠️ **Requires Node ≥ 18** (recommend **Node 22 LTS** — matches CI). The package's `prebuild`/`postbuild` hooks verify the working tree stays clean after builds.
 
+
+</details>
+
 ---
 
 ## 📈 Inspired by (design & structure)
+
+<details>
+<summary><b>📈 &nbsp;Show the reference list</b></summary>
 
 - **[tradernonymous/EzyAi](https://github.com/tradernonymous/EzyAi)** — guided flows with `Back/Cancel`, inline follow-ups on every AI result, persistent button menu, Free-vs-PRO gating with `/plans`, `/redeem`, trials, and admin codes.
 - **[attio.com](https://attio.com)** — premium dark CRM aesthetic: sidebar workspace, kanban pipeline, clean tables, inbox-focused layout.
 - **[telegraf/telegraf](https://github.com/telegraf/telegraf)** — feature-rich Telegram bot library.
 - **[twentycrm/twenty](https://github.com/twentycrm/twenty)** — AI-native CRM / pipeline ideas.
 - **[activepieces/activepieces](https://github.com/activepieces/activepieces)** — no-code automation, inspiration for lead-stage workflows.
+
+
+</details>
 
 ---
 
@@ -315,4 +461,24 @@ CI (`.github/workflows/ci.yml`, **Node 22**, `actions/checkout`/`setup-node` v5)
 
 ---
 
-<p align="center"><sub>Built with ❤️ using only free services — Mistral free tier · JSON store · GitHub Actions · Express</sub></p>
+<div align="center">
+
+<br>
+
+<img src="img/EzyViralAi-mark-color.svg" alt="EzyViral OS mark" width="56">
+
+<br><br>
+
+**EzyViral OS** &nbsp;·&nbsp; 🛸 &nbsp;Telegram-first AI marketing command center
+
+<sub>Built on free services only — Mistral free tier · JSON store · Express · Fly.io</sub>
+
+<br>
+
+[![Live app](https://img.shields.io/badge/%E2%96%B6_open_the_app-0BD97E?style=for-the-badge&labelColor=05030f)](https://tg-ezy-ai-os-young-blossom-4821.fly.dev/home)
+
+<br>
+
+<a href="#-what-this-is">⬆️ &nbsp;Back to top</a>
+
+</div>

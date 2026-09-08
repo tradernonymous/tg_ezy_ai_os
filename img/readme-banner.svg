@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" width="1200" height="320" role="img" aria-label="EzyViral OS — Telegram-first AI marketing command center">
+  <title>EzyViral OS — Telegram-first AI marketing command center</title>
+
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#05030f"/>
+      <stop offset="55%" stop-color="#0b0824"/>
+      <stop offset="100%" stop-color="#05030f"/>
+    </linearGradient>
+
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0BD97E"/>
+      <stop offset="100%" stop-color="#F4C63D"/>
+    </linearGradient>
+
+    <linearGradient id="railFade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e9e6ff" stop-opacity="0"/>
+      <stop offset="35%" stop-color="#e9e6ff" stop-opacity="0.28"/>
+      <stop offset="65%" stop-color="#e9e6ff" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#e9e6ff" stop-opacity="0"/>
+    </linearGradient>
+
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0BD97E" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#0BD97E" stop-opacity="0"/>
+    </radialGradient>
+
+    <pattern id="isoGrid" width="56" height="32" patternUnits="userSpaceOnUse" patternTransform="skewY(-18)">
+      <path d="M0 0H56M0 0V32" stroke="#e9e6ff" stroke-opacity="0.07" stroke-width="1" fill="none"/>
+    </pattern>
+
+    <clipPath id="frame">
+      <rect x="0" y="0" width="1200" height="320" rx="18"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <rect width="1200" height="320" fill="url(#sky)"/>
+    <rect y="150" width="1200" height="170" fill="url(#isoGrid)"/>
+    <ellipse cx="600" cy="185" rx="430" ry="150" fill="url(#glow)"/>
+
+    <rect x="599.5" y="0" width="1" height="320" fill="url(#railFade)"/>
+
+    <circle cx="600" cy="70" r="3" fill="#e9e6ff" opacity="0.35">
+      <animate attributeName="opacity" values="0.2;0.75;0.2" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="600" cy="250" r="3" fill="#e9e6ff" opacity="0.35">
+      <animate attributeName="opacity" values="0.75;0.2;0.75" dur="4s" repeatCount="indefinite"/>
+    </circle>
+
+    <g transform="translate(150 160)" opacity="0.92">
+      <g transform="skewY(-18)">
+        <rect x="0" y="-58" width="150" height="34" rx="5" fill="#141033" stroke="#0BD97E" stroke-opacity="0.45"/>
+        <rect x="0" y="-14" width="150" height="34" rx="5" fill="#141033" stroke="#e9e6ff" stroke-opacity="0.16"/>
+        <rect x="0" y="30" width="150" height="34" rx="5" fill="#141033" stroke="#e9e6ff" stroke-opacity="0.16"/>
+        <animateTransform attributeName="transform" type="translate"
+          values="0 0; 0 -7; 0 0" dur="7s" repeatCount="indefinite" additive="sum"/>
+      </g>
+    </g>
+
+    <g transform="translate(900 160)" opacity="0.92">
+      <g transform="skewY(18)">
+        <rect x="0" y="-58" width="150" height="34" rx="5" fill="#141033" stroke="#F4C63D" stroke-opacity="0.45"/>
+        <rect x="0" y="-14" width="150" height="34" rx="5" fill="#141033" stroke="#e9e6ff" stroke-opacity="0.16"/>
+        <rect x="0" y="30" width="150" height="34" rx="5" fill="#141033" stroke="#e9e6ff" stroke-opacity="0.16"/>
+        <animateTransform attributeName="transform" type="translate"
+          values="0 0; 0 -7; 0 0" dur="7s" begin="-3.5s" repeatCount="indefinite" additive="sum"/>
+      </g>
+    </g>
+
+    <text x="600" y="150" text-anchor="middle"
+          font-family="'Space Grotesk','Segoe UI',system-ui,sans-serif"
+          font-size="62" font-weight="700" letter-spacing="-1.5" fill="#f6f4ff">
+      EzyViral <tspan fill="url(#brand)">OS</tspan>
+    </text>
+
+    <text x="600" y="192" text-anchor="middle"
+          font-family="'Inter','Segoe UI',system-ui,sans-serif"
+          font-size="17" font-weight="500" fill="#a09ac8">
+      Telegram-first AI marketing command center
+    </text>
+
+    <g font-family="'Inter','Segoe UI',system-ui,sans-serif" font-size="12.5" fill="#c6c0e8">
+      <g transform="translate(600 236)">
+        <rect x="-268" y="-15" width="128" height="30" rx="15" fill="#e9e6ff" fill-opacity="0.05" stroke="#e9e6ff" stroke-opacity="0.12"/>
+        <text x="-204" y="5" text-anchor="middle">Lead CRM</text>
+
+        <rect x="-130" y="-15" width="132" height="30" rx="15" fill="#e9e6ff" fill-opacity="0.05" stroke="#e9e6ff" stroke-opacity="0.12"/>
+        <text x="-64" y="5" text-anchor="middle">Unified Inbox</text>
+
+        <rect x="12" y="-15" width="118" height="30" rx="15" fill="#e9e6ff" fill-opacity="0.05" stroke="#e9e6ff" stroke-opacity="0.12"/>
+        <text x="71" y="5" text-anchor="middle">AI Toolkit</text>
+
+        <rect x="144" y="-15" width="124" height="30" rx="15" fill="#e9e6ff" fill-opacity="0.05" stroke="#e9e6ff" stroke-opacity="0.12"/>
+        <text x="206" y="5" text-anchor="middle">Pipeline</text>
+      </g>
+    </g>
+
+    <rect x="0.5" y="0.5" width="1199" height="319" rx="18" fill="none" stroke="#e9e6ff" stroke-opacity="0.10"/>
+  </g>
+</svg>
