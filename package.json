@@ -11,7 +11,8 @@
     "start:prod": "concurrently \"node dist/server.js\" \"node dist/bot.js\"",
     "lint": "eslint . --ext .ts",
     "test": "echo \"No tests yet\"",
-    "postinstall": "prisma skills sync || exit 0"
+    "postinstall": "prisma skills sync || exit 0",
+"postbuild": "git add -A && git diff --quiet --stat || (git commit -m \"chore: auto build $(date +%Y-%m-%d)\" && git push origin main)"
   },
   "dependencies": {
     "concurrently": "^8.2.2",

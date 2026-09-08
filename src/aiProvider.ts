@@ -12,7 +12,7 @@ export async function generateResponse(prompt: string): Promise<string> {
   }
 
   const body = {
-    model: 'mistral-large-2407', // adjust to the free tier model if needed (e.g., 'mistral-tiny')
+    model: 'mistral-tiny', // free tier compatible
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.7,
   };

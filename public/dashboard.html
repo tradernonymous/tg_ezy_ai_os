@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TG Ezy AI OS — Marketing Dashboard</title>
+  <meta name="description" content="Modern, futuristic marketing operations dashboard for Telegram leads and AI marketing OS." />
+
+  <!-- Modern font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root {
+      --bg-deep: #060b14;
+      --glass: rgba(255, 255, 255, 0.06);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --text-main: #e8ecf1;
+      --text-muted: #8e9aaa;
+      --accent: linear-gradient(135deg, #6ee7ff 0%, #8a6dff 60%, #ff6eb3 100%);
+      --accent-text: #6ee7ff;
+      --card-radius: 24px;
+      --shadow: 0 8px 32px rgba(6, 11, 20, 0.6);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', 'Space Grotesk', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.55;
+    }
+
+    /* Animated gradient mesh behind everything */
+    .mesh {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(at 20% 10%, rgba(110, 231, 255, 0.12) 0%, transparent 50%),
+        radial-gradient(at 80% 80%, rgba(138, 109, 255, 0.12) 0%, transparent 50%),
+        radial-gradient(at 50% 50%, rgba(255, 110, 179, 0.08) 0%, transparent 60%);
+      animation: meshDrift 18s ease-in-out infinite alternate;
+    }
+    @keyframes meshDrift {
+      0% { background-position: 20% 10%, 80% 80%, 50% 50%; }
+      100% { background-position: 30% 20%, 70% 60%, 40% 70%; }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+    .logo-area { display: flex; align-items: center; gap: 16px; }
+    .logo-ring {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: grid; place-items: center;
+      box-shadow: 0 4px 20px rgba(110, 231, 255, 0.35);
+    }
+    .logo-ring span { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; color: #fff; }
+    .logo-text h1 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; letter-spacing: -1.5px; font-size: 28px; line-height: 1.1; }
+    .logo-text p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+    .date-pill {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      color: var(--text-muted);
+      backdrop-filter: blur(8px);
+      box-shadow: var(--shadow);
+    }
+
+    /* Section title */
+    .section-label {
+      display: inline-block;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-text);
+      margin-bottom: 16px;
+      opacity: 0.9;
+    }
+
+    /* Cards grid */
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+    .card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--card-radius);
+      padding: 28px;
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 4px;
+      background: var(--accent);
+      border-radius: 999px;
+      opacity: 0.6;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 40px rgba(6, 11, 20, 0.5);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .card h3 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 22px; margin-bottom: 6px; letter-spacing: -1px; }
+    .card .sub { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
+    .card .value { font-family: 'Space Grotesk', sans-serif; font-size: 36px; font-weight: 700; letter-spacing: -2px; background: var(--accent); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .card .meta { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .chip {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 6px 12px; border-radius: 999px;
+      font-size: 12px; color: var(--text-muted);
+    }
+
+    /* Chart section */
+    .chart-wrap { background: var(--glass); border: 1px solid var(--glass-border); border-radius: var(--card-radius); padding: 28px; backdrop-filter: blur(16px); box-shadow: var(--shadow); }
+    .chart-wrap h2 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: -1px; margin-bottom: 20px; }
+    canvas { max-height: 320px; width: 100% !important; }
+
+    /* Leads table */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+    th { text-align: left; padding: 14px 16px; color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    td { padding: 14px 16px; background: rgba(255,255,255,0.03); border-top: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    td:first-child { border-left: 1px solid rgba(255,255,255,0.06); border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+    td:last-child { border-right: 1px solid rgba(255,255,255,0.06); border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+    tr:hover td { background: rgba(255,255,255,0.06); }
+
+    /* Quick actions buttons */
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+    .btn-pill {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 10px 18px; border-radius: 999px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text-main); text-decoration: none; font-size: 14px; font-weight: 600;
+      transition: background 0.2s ease, transform 0.15s ease;
+      backdrop-filter: blur(8px);
+    }
+    .btn-pill:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); border-color: rgba(255,255,255,0.25); }
+    .btn-pill .emoji { font-size: 18px; }
+
+    /* Footer */
+    footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 13px; flex-wrap: wrap; gap: 12px; }
+    footer a { color: var(--accent-text); text-decoration: none; }
+
+    /* Responsive */
+    @media (max-width: 720px) {
+      .container { padding: 32px 16px 60px; }
+      header { flex-direction: column; align-items: flex-start; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .card { padding: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="mesh"></div>
+
+  <main class="container">
+    <header>
+      <div class="logo-area">
+        <div class="logo-ring"><span>EO</span></div>
+        <div class="logo-text">
+          <h1>EzyViral AI OS</h1>
+          <p>Telegram-first AI Marketing Command Center</p>
+        </div>
+      </div>
+      <div class="date-pill">📅 Today — <span id="todayDate"></span></div>
+    </header>
+
+    <section aria-label="Key metrics">
+      <p class="section-label">📊 Live Metrics</p>
+      <div class="grid-3">
+        <article class="card">
+          <h3>Leads</h3>
+          <p class="sub">Active pipeline</p>
+          <div class="value">1</div>
+          <div class="meta">
+            <span class="chip">New: 1</span>
+            <span class="chip">Contacted: 0</span>
+            <span class="chip">Qualified: 0</span>
+            <span class="chip">Closed: 0</span>
+          </div>
+        </article>
+        <article class="card">
+          <h3>AI Conversations</h3>
+          <p class="sub">Generated today</p>
+          <div class="value">3</div>
+          <div class="meta">
+            <span class="chip">Active</span>
+            <span class="chip">Mistral Tiny</span>
+            <span class="chip">Free Tier</span>
+          </div>
+        </article>
+        <article class="card">
+          <h3>Plan</h3>
+          <p class="sub">Subscription tier</p>
+          <div class="value">PRO</div>
+          <div class="meta">
+            <span class="chip">Updated</span>
+            <span class="chip">Auto-renew</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section aria-label="Pipeline chart" style="margin-top: 48px;">
+      <div class="chart-wrap">
+        <h2>📈 Pipeline Overview</h2>
+        <canvas id="pipelineChart"></canvas>
+      </div>
+    </section>
+
+    <section aria-label="Leads table" style="margin-top: 48px;">
+      <p class="section-label">📂 Leads</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Stage</th><th>Telegram ID</th><th>Created</th></tr>
+          </thead>
+          <tbody id="leadsTableBody">
+            <tr><td><strong>Alice</strong></td><td><span class="chip">new</span></td><td>6282941530</td><td>2026-09-08</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-label="Quick actions" style="margin-top: 48px;">
+      <p class="section-label">⚡ Quick Actions</p>
+      <div class="actions" id="mainActions">
+        <a href="#" onclick="openSubMenu('plan'); return false;" class="btn-pill"><span class="emoji">💳</span> Plan</a>
+        <a href="#" onclick="openSubMenu('persona'); return false;" class="btn-pill"><span class="emoji">🎭</span> Persona</a>
+        <a href="#" onclick="openSubMenu('meta'); return false;" class="btn-pill"><span class="emoji">🔍</span> Meta</a>
+        <a href="#" onclick="openSubMenu('valuemap'); return false;" class="btn-pill"><span class="emoji">🗺️</span> Value</a>
+        <a href="#" onclick="openSubMenu('review'); return false;" class="btn-pill"><span class="emoji">✏️</span> Review</a>
+        <a href="#" onclick="openSubMenu('growth'); return false;" class="btn-pill"><span class="emoji">📈</span> Growth</a>
+        <a href="#" onclick="openSubMenu('swipe'); return false;" class="btn-pill"><span class="emoji">📂</span> Swipe</a>
+        <a href="#" onclick="openSubMenu('workflow'); return false;" class="btn-pill"><span class="emoji">⚙️</span> Workflow</a>
+      </div>
+
+      <div id="subMenuArea" style="margin-top: 24px; display: none;">
+        <div class="grid-3" id="subMenuGrid"></div>
+        <div style="margin-top: 16px;">
+          <a href="#" onclick="closeSubMenu(); return false;" class="btn-pill"><span class="emoji">⬅️</span> Back</a>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <span>Built with ❤️ — <strong>TG Ezy AI OS</strong> · Only free services (Mistral, JSON store, GitHub Actions)</span>
+      <a href="https://github.com/printezy247/tg_ezy_ai_os" target="_blank">GitHub ↗</a>
+    </footer>
+  </main>
+
+  <script>
+    document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const subMenus = {
+      plan: [
+        { label: '📊 Current Plan', desc: 'Show current subscription tier and lead count.', action: () => alert('Plan: PRO | Leads: 1') },
+        { label: '💳 Set Free', desc: 'Switch to free tier.', action: () => alert('Plan updated to FREE') },
+        { label: '💳 Set Pro', desc: 'Upgrade to Pro.', action: () => alert('Plan updated to PRO') },
+        { label: '💳 Set Enterprise', desc: 'Upgrade to Enterprise.', action: () => alert('Plan updated to ENTERPRISE') },
+      ],
+      persona: [
+        { label: '🎭 Tone', desc: 'Set tone (professional / friendly / witty).', action: () => promptAndUpdate('tone') },
+        { label: '🎭 Audience', desc: 'Set audience (general / developers / marketers).', action: () => promptAndUpdate('audience') },
+        { label: '🎭 Style', desc: 'Set style (clear / concise / detailed).', action: () => promptAndUpdate('style') },
+      ],
+      meta: [
+        { label: '🔍 Generate Meta', desc: 'Generate SEO meta for a topic.', action: () => { const topic = prompt('Enter topic:') || 'marketing'; alert('Meta generated for: ' + topic); } },
+      ],
+      valuemap: [
+        { label: '🗺️ Generate Map', desc: 'Build product value map.', action: () => { const product = prompt('Enter product:') || 'our product'; alert('Value map for: ' + product); } },
+      ],
+      review: [
+        { label: '✏️ Review Content', desc: 'Apply editing codes.', action: () => { const content = prompt('Paste content:') || 'Sample content.'; alert('Review complete for content.'); } },
+      ],
+      growth: [
+        { label: '📈 Show Prompts', desc: 'Access growth prompts library.', action: () => alert('Growth prompts: 5 prompts loaded.') },
+      ],
+      swipe: [
+        { label: '📂 Show Swipe', desc: 'Show swipe file hooks.', action: () => alert('Swipe files: 3 hooks loaded.') },
+      ],
+      workflow: [
+        { label: '⚙️ Show Workflow', desc: 'Show automation triggers.', action: () => alert('Automation: stage-change triggers active.') },
+      ],
+    };
+
+    function promptAndUpdate(key) {
+      const val = prompt('New value for ' + key + ':');
+      if (val) alert('Persona ' + key + ' updated to: ' + val);
+    }
+
+    function openSubMenu(feature) {
+      const data = subMenus[feature];
+      if (!data) return;
+      document.getElementById('mainActions').style.display = 'none';
+      const grid = document.getElementById('subMenuGrid');
+      grid.innerHTML = data.map(item => `
+        <article class="card" onclick="(${item.action.toString()})(); closeSubMenu(); return false;" style="cursor: pointer;">
+          <h3>${item.label}</h3>
+          <p class="sub">${item.desc}</p>
+        </article>
+      `).join('');
+      document.getElementById('subMenuArea').style.display = 'block';
+      window.scrollTo({ top: document.getElementById('subMenuArea').offsetTop - 20, behavior: 'smooth' });
+    }
+
+    function closeSubMenu() {
+      document.getElementById('subMenuArea').style.display = 'none';
+      document.getElementById('mainActions').style.display = 'flex';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    const ctx = document.getElementById('pipelineChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['New', 'Contacted', 'Qualified', 'Closed'],
+        datasets: [{
+          label: 'Pipeline',
+          data: [1, 0, 0, 0],
+          backgroundColor: ['#6ee7ff', '#8a6dff', '#ff6eb3', '#ffd166'],
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: '#e8ecf1', font: { family: 'Inter, sans-serif', size: 13 } },
+          },
+        },
+      },
+    });
+  </script>
+</body>
+</html>

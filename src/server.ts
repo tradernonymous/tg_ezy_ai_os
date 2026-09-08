@@ -1,5 +1,6 @@
 import express from "express";
 import * as dotenv from "dotenv";
+import * as path from "path";
 import {
   getLeads,
   addLead,
@@ -89,6 +90,11 @@ app.get("/api/stats", async (_req, res) => {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch stats" });
   }
+});
+
+// ---------- Dashboard ----------
+app.get("/dashboard", (_req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html'));
 });
 
 const PORT = Number(process.env.PORT) || 3000;
