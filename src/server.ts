@@ -43,6 +43,9 @@ const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "100kb" }));
 
+// Static brand assets (logo, favicon)
+app.use("/img", express.static(path.join(__dirname, "..", "public", "img")));
+
 // ---------- CORS ----------
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
 app.use((_req, res, next) => {

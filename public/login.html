@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sign in — EzyViral OS</title>
 <meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="/img/EzyViralAi-mark-color.svg">
 <style>
   :root {
     --bg: #0b0e17; --surface: #10141f; --surface-2: #151a28;
@@ -27,7 +28,8 @@
   .card { width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 28px 26px; position: relative; z-index: 1; box-shadow: 0 24px 70px rgba(0,0,0,.45); animation: rise 420ms cubic-bezier(.22,1,.36,1); }
   @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
   .brand { display: flex; align-items: center; gap: 9px; font-weight: 800; letter-spacing: .3px; margin-bottom: 4px; }
-  .brand .logo { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, var(--accent), var(--violet)); display: grid; place-items: center; font-size: 14px; }
+  .brand .logo { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; box-shadow: 0 0 18px rgba(11,217,126,.35); }
+  .brand .logo img { width: 32px; height: 32px; display: block; }
   .brand .sub { font-size: 11px; color: var(--text-3); font-weight: 500; }
   h1 { font-size: 20px; margin: 18px 0 4px; font-weight: 700; }
   .lead { font-size: 13px; color: var(--text-2); margin-bottom: 22px; line-height: 1.5; }
@@ -67,7 +69,7 @@
 <div id="aurora"></div>
 <div class="card">
   <div class="brand">
-    <div class="logo">Ez</div>
+    <div class="logo"><img src="/img/EzyViralAi-mark-color.svg" alt="EzyViral OS mark"></div>
     <div>
       <div style="font-size:15px;">EzyViral OS</div>
       <div class="sub">Your marketing command center</div>
