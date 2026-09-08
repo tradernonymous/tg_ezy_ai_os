@@ -22,7 +22,7 @@ One Telegram chat + one web dashboard = your whole marketing operation:
 - **📊 Dashboard** — a premium, Attio-grade dark workspace: design token system, collapsible sidebar, **Ctrl/⌘K command palette**, overview metrics, value-weighted kanban, a **full leads workspace** (search, stage/channel filters, sortable table, density toggle, row selection + bulk actions, contextual detail drawer), unified **inbox with thread view + composer**, and **context-aware Ask AI**. An energetic **motion layer** (aurora background, cursor glow, tilt cards, confetti, count-up metrics, staggered entrances) ships on by default and respects `prefers-reduced-motion` or the ✦ toggle. No chart library — lightweight CSS visuals keep it fast.
 - **🔐 Accounts & plans** — web login with **Google, Telegram Login Widget or Magic Key (dev-preview codes)**. Sessions are HMAC-signed cookies (`__Host-` in prod, 7-day expiry, no new deps). Each account has its own data; the first account **adopts** the existing demo data as its owner workspace. **Five tiers — Free · Hobby · Marketer · Navigator · Thinker** — gate every tool on the client *and* the server.
 
-Every tool works **two ways**: tap a button *or* type a command. Results come with **one-tap follow-ups**, and the whole thing is gated by a **5-tier plan** you control (self-serve: no Stripe/Stars needed — connect Stripe/USDT keys later to go live).
+Every tool works **two ways**: tap a button *or* type a command. Results come with **one-tap follow-ups**, and the whole thing is gated by a **5-tier plan** you control. **Payments are live**: Stripe Card Checkout and manual USDT from the dashboard Plans modal and the bot's `/plans` — drop your keys in and it just works.
 
 ---
 
@@ -37,7 +37,7 @@ Every tool works **two ways**: tap a button *or* type a command. Results come wi
   - **Navigator (legacy PRO):** Value Map · Content Studio · Campaigns · Keywords · Lead Magnets · Workflow · Exports
   - **Thinker (legacy Enterprise):** everything + Unified Inbox
 - 📬 **Inbox** — `/inbox` shows unread counts per channel + one-tap link to the dashboard thread view (full inbox view requires **Thinker**).
-- 💳 **Monetization** — `/plans` (5 tiers), free trial, `/redeem CODE`, admin `/mkcode` `/codes` `/revokecode` `/settrial`, `PRO_ACCESS_IDS` always-free list. Legacy `pro → navigator`, `enterprise → thinker`.
+- 💳 **Monetization** — `/plans` (5 tiers) opens **live payment**: a **Stripe pay-by-card link** or a manual **USDT** address; free trial + `/redeem CODE` still work; admin `/mkcode` `/codes` `/revokecode` `/settrial` and `/confirmpay <uid> <tier>` (verifies USDT); `PRO_ACCESS_IDS` always-free list. `/plan set` is **admin-only**. Legacy `pro → navigator`, `enterprise → thinker`.
 - 📡 **Broadcast** — admin-only push message to every known chat + lead.
 - ⏰ **Reminders** — persisted across bot restarts (`🕘 Remind` / `/remind`).
 - ⚙️ **Settings** — Profile, Notifications toggle, Business profile (feeds the AI with real facts), Danger Zone, and i18n.
@@ -60,8 +60,8 @@ Every tool works **two ways**: tap a button *or* type a command. Results come wi
 - **Full neon brand theme** — green/gold viral-radar mark (`img/EzyViralAi-mark-color.svg`) wired into the landing, sign-in page, dashboard sidebar and favicon.
 - **Hero** — problem → solution framing with the Marketer package chips (Content Review · Growth Prompts · Swipe Files · Value Map · Lead Magnets), a glowing animated product mock and count-up stats.
 - **Unified Inbox centerpiece** — outer-space showpiece: starfield canvases, orbit rings, scan beam, shooting stars and orbiting channel satellites, with the "most-requested — and most expensive" half-price claim.
-- **Ask AI, live on the page** — the arsenal's **Ask AI** tool opens a chat modal on desktop (nav link too), and a 3-card chat section on mobile/tablet. Growth / Content / Funnel personas, quick-prompt chips, typing indicator; the backend feeds it a **product knowledge base** so it can browse features, plans and pricing (see `/api/chat`).
-- **Journey route** — railway-style dashed spine + traveling light with pulsing station nodes on each section and a gold arrival node at the final CTA (hidden below desktop).
+- **Ask AI, live on the page** — the arsenal's **Ask AI** card ends the tools grid as an **enlarged desktop finale card** (two columns, horizontal layout, in-card "Try It Free →" pill) that opens the chat modal (nav link too). On mobile/tablet a 3-card chat section sits above a prominent **Try It Free — No Card** CTA. Growth / Content / Funnel personas, quick-prompt chips, typing indicator; the backend feeds it a **product knowledge base** so it can browse features, plans and pricing (see `/api/chat`).
+- **Continuous section rail** — Railway-style vertical spine connecting the sections: dashed track with cyan sleeper ticks, a traveling light, pulsing diamond stations on each section and a gold arrival node at the final CTA (hidden below desktop). No overlapping decoration — the Ask AI "Try It Free" badge flows inside the card.
 - **Radiant Marketer card** — scaled, floating, animated conic-gradient border vs. the other tiers.
 - **Funnel wiring** — scroll-progress bar, sticky header CTA, floating "Jump in" pill, every section CTA funnels to `/dashboard`, section reveals via IntersectionObserver, moving glyphs on header hover (desktop only).
 - **Pricing CTAs (Start Case)** — Free **Start Free** · Hobby **Let Me Try** · Navigator **Launch Nav** · Thinker **Full Power** (animated spectrum gradient) · Marketer **Go Marketer** (Popular, glow-pulsing primary buttons throughout).
@@ -106,7 +106,7 @@ The bot prints **"Bot started"** and the API is at `http://localhost:3000` → s
 | Command | Effect |
 |---|---|
 | `/start` `/help` | Welcome + full help menu |
-| `/plans` | 💳 Pricing (5 tiers in `src/plans.ts`) + trial button |
+| `/plans` | 💳 Pricing (5 tiers in `src/plans.ts`) — Stripe pay-by-card link, USDT checkout, or free trial |
 | `/redeem CODE` | 🎫 Activate a gift/trial code |
 | `/addlead` | ➕ Guided 2-step lead capture (name → stage) |
 | `/stage <new\|contacted\|qualified\|closed>` | 🔄 Set lead stage |
@@ -124,7 +124,7 @@ The bot prints **"Bot started"** and the API is at `http://localhost:3000` → s
 | `/watch` `/watches` `/unwatch` `/autopilot` | 👁️ EzyAi-style live watches & auto-signals |
 | `/dashboard` | 📊 Link to the dashboard |
 
-**Admin-only:** `/mkcode trial <days> [count] [uses]` · `/mkcode 1mo [count] [uses]` · `/codes` · `/revokecode CODE` · `/settrial <1-30>` · `/broadcast <message>`
+**Admin-only:** `/mkcode trial <days> [count] [uses]` · `/mkcode 1mo [count] [uses]` · `/codes` · `/revokecode CODE` · `/settrial <1-30>` · `/confirmpay <uid> <tier>` · `/broadcast <message>`
 
 ---
 
@@ -157,8 +157,11 @@ The bot prints **"Bot started"** and the API is at `http://localhost:3000` → s
 | `POST` | `/api/conversations/:id/read` | Mark thread read (account-scoped) |
 | `POST` | `/api/conversations/:id/reply` | Send brand reply `{ text }` |
 | `GET` | `/api/inbox` | Unread totals per channel (summary for non-Thinker, `view: "full"` for Thinker) |
-| `POST` | `/api/billing/checkout` | Billing placeholder — `pending-config` until Stripe/USDT keys are set |
-| `GET` | `/api/billing/status` | Stripe/USDT config booleans |
+| `POST` | `/api/billing/checkout` | Stripe `{ planId, provider:"stripe" }` → Checkout Session URL (one-time charge, 30-day grant) · or `{ planId, provider:"usdt-manual" }` → configured USDT address |
+| `POST` | `/api/billing/confirm` | `{ sessionId }` — verify the paid Stripe session server-side and activate the plan (called by the dashboard success redirect) |
+| `POST` | `/api/billing/webhook` | Stripe webhook (`checkout.session.completed`) — raw-body route; signature-verified when `STRIPE_WEBHOOK_SECRET` is set, else session verify via Stripe |
+| `POST` | `/api/billing/usdt/pending` | Report a manual USDT transfer `{ tier, txid, amount }` → logged to `db/payments.json` for manual confirmation |
+| `GET` | `/api/billing/status` | `{ stripe, usdt }` config booleans (drives the dashboard Plans modal) |
 | `GET` | `/dashboard` | HTML dashboard (redirects to `/login` if signed out) |
 
 ```bash
@@ -195,8 +198,9 @@ Security & robustness: JSON body **size limit** (100kb), **rate limiting** on `/
 | `MAGIC_DEV_PREVIEW` | `true` | Magic Key codes shown in-browser (dev preview); auto-fallback whenever email is unconfigured |
 | `EMAIL_API_KEY` | — | Resend API key → emails Magic Key codes (no SDK, direct REST) |
 | `EMAIL_FROM` | — | Verified Resend sender, e.g. `onboarding@yourdomain.com` |
-| `STRIPE_SECRET_KEY` | — | Set to turn on Stripe checkout (placeholder — SDK not installed yet) |
-| `USDT_ADDRESS` | — | Set to offer manual USDT checkout |
+| `STRIPE_SECRET_KEY` | — | Stripe secret key (`sk_test_...`/`sk_live_...`) — enables real Card Checkout Sessions |
+| `STRIPE_WEBHOOK_SECRET` | — | `whsec_...` — enables signature-verified webhook auto-activation |
+| `USDT_ADDRESS` | — | TRC20 address — offers manual USDT checkout (confirmed by admin via `/confirmpay`) |
 | `DATA_DIR` | `<project>/db` | Where JSON stores live |
 
 ---
@@ -213,7 +217,7 @@ src/
   accountStore.ts # Per-account workspaces (db/accounts.json, first account adopts demo data)
   session.ts      # HMAC-SHA256 signed cookies (node:crypto, __Host- in prod, 7-day expiry)
   magic.ts        # One-time Magic Key codes (6-digit, 10-min TTL, dev-preview delivery)
-  billing.ts      # Stripe/USDT checkout placeholder (pending-config until keys set)
+  billing.ts      # Live billing — Stripe Checkout sessions, USDT manual ledger, webhook verify
   leadStore.ts    # Lead CRUD + sanitization + CSV export (db/leads.json, account-scoped)
   inbox.ts        # Unified multi-platform inbox (simulated) — db/conversations.json
   stateStore.ts   # Atomic crash-safe JSON store with .bak recovery
@@ -221,7 +225,7 @@ src/
   __tests__/      # Unit tests (node:test) for plans, session, accounts, stores, inbox
 public/
   index.html      # Public landing page (served at /home) — neon theme, unified-inbox showpiece
-  login.html      # Sign-in: Google · Telegram · Magic Key
+  login.html      # Sign-in: Google · Telegram · Magic Key (matching neon branding + Home button)
   dashboard.html  # Attio-style dashboard incl. inbox thread view + plans modal
   img/            # Brand assets (EzyViralAi-mark-color.svg, served at /img)
 db/
@@ -249,7 +253,7 @@ Single source of truth: `src/plans.ts`. Dashboard tools, web APIs and bot gating
 - 🎁 Free trial: `/plans` → **Claim** (default 3 days, admin can `/settrial`).
 - 🎫 Gift codes: create with `/mkcode`, redeem with `/redeem CODE`.
 - 👥 `PRO_ACCESS_IDS` env grants permanent access.
-- 🔌 Billing: Stripe + USDT are **placeholders** (`/api/billing/checkout` → `pending-config`) until you drop keys in. Telegram codes keep working.
+- 🔌 **Billing (live):** `/plans` in the bot and the dashboard **Plans modal** create a **Stripe Checkout Session** (one-time monthly charge → **30-day grant**, extends any remaining `planUntil`) or show a manual **USDT** address. The dashboard auto-confirms the paid session on the success redirect (`?billing=success&session_id=…` → `/api/billing/confirm`); a Stripe **webhook** at `/api/billing/webhook` (raw body, signature-verified when `STRIPE_WEBHOOK_SECRET` is set, else session-verify via Stripe) activates sessions too. Manual USDT is logged to `db/payments.json` and confirmed by an admin with `/confirmpay <uid> <tier>`. Bot `/plan set` is admin-only. Trial codes and `/redeem` work alongside.
 - Self-serve by design — no payment provider required to launch.
 
 ---
