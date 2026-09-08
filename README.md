@@ -57,7 +57,10 @@ Every tool works **two ways**: tap a button *or* type a command. Results come wi
 - ✨ **System UX** — toasts, styled confirm dialog, skeleton loaders, empty/error states with CTAs, focus-visible rings, ARIA labels, `Esc` closes overlays, auto-refresh every 20s.
 
 ### 🛸 Landing page (neon redesign, served at `/home`)
-- **Full neon brand theme** — green/gold viral-radar mark (`img/EzyViralAi-mark-color.svg`) wired into the landing, sign-in page, dashboard sidebar and favicon.
+- **Full neon brand theme** — green/gold viral-radar mark (`img/EzyViralAi-mark-color.svg`) wired into the landing, sign‑in page, dashboard sidebar and favicon.
+
+  <img src="img/EzyViralAi-mark-color.svg" alt="EzyViral AI viral-radar mark" width="88" />
+
 - **Hero** — problem → solution framing with the Marketer package chips (Content Review · Growth Prompts · Swipe Files · Value Map · Lead Magnets), a glowing animated product mock and count-up stats.
 - **Unified Inbox centerpiece** — outer-space showpiece: starfield canvases, orbit rings, scan beam, shooting stars and orbiting channel satellites, with the "most-requested — and most expensive" half-price claim.
 - **Ask AI, live on the page** — the arsenal's **Ask AI** card ends the tools grid as an **enlarged desktop finale card** (two columns, horizontal layout, in-card "Try It Free →" pill) that opens the chat modal (nav link too). On mobile/tablet a 3-card chat section sits above a prominent **Try It Free — No Card** CTA. Growth / Content / Funnel personas, quick-prompt chips, typing indicator; the backend feeds it a **product knowledge base** so it can browse features, plans and pricing (see `/api/chat`).
