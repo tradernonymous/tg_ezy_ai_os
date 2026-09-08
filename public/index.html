@@ -20,6 +20,11 @@
     --surface-2: rgba(26,20,58,.72); --border: rgba(139,92,246,.22); --border-strong: rgba(168,85,247,.45);
     --text: #f6f4ff; --text-2: #c6c0e8; --text-3: #a09ac8;
     --purple: #8b5cf6; --violet: #a855f7; --cyan: #22d3ee; --fuchsia: #e879f9; --pink: #f472b6; --lime: #a3e635; --green: #0BD97E; --gold: #F4C63D;
+    /* Structural layer: neutral, never brand-coloured. Structure should be
+       felt, not seen — brand colour lives in the logo, CTAs and small accents. */
+    --hair: rgba(233,230,255,.065); --hair-2: rgba(233,230,255,.10); --hair-3: rgba(233,230,255,.16);
+    --spine-color: rgba(233,230,255,.10); --node-color: rgba(233,230,255,.28); --node-active: rgba(233,230,255,.55);
+    --container: 1140px; --gutter: 24px;
     --r-lg: 22px; --r: 12px;
     --tr-smooth: 320ms cubic-bezier(.22,1,.36,1);
     --font-d: 'Space Grotesk', 'Inter', system-ui, sans-serif;
@@ -29,12 +34,14 @@
   html { scroll-behavior: smooth; }
   html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="off"] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; } }
-  body { background: var(--bg); color: var(--text); font-family: var(--font); line-height: 1.62; overflow-x: hidden; }
+  /* position:relative makes body the containing block for the VisualSpine,
+     so the rail spans the whole document instead of one viewport. */
+  body { background: var(--bg); color: var(--text); font-family: var(--font); line-height: 1.62; overflow-x: hidden; position: relative; }
   a { color: inherit; text-decoration: none; }
   h1,h2,h3,h4 { font-family: var(--font-d); letter-spacing: -.4px; line-height: 1.12; }
 
   /* ---------- background layers ---------- */
-  #starfield, #nebula { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  #nebula { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
   #orbs { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
   .orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: .5; will-change: transform; }
   .orb.o1 { width: 54vmax; height: 54vmax; background: var(--purple); top: -22vmax; left: -14vmax; animation: orbA 26s ease-in-out infinite alternate; }
@@ -93,7 +100,9 @@
   .motion-toggle input { display: none; }
 
   /* ---------- hero ---------- */
-  .hero { padding: 76px 0 40px; text-align: center; position: relative; }
+  /* Keep .wrap's horizontal gutter — the padding shorthand was zeroing it,
+     which ran hero text to both screen edges on phones. */
+  .hero { padding: 76px var(--gutter) 40px; text-align: center; position: relative; }
   .badge { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2);
     background: var(--surface); border: 1px solid var(--border); padding: 6px 14px; border-radius: 999px; margin-bottom: 26px; }
   .badge .live { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulse 2s infinite; }
@@ -339,26 +348,32 @@
   .build-stamp { font-size: 10px; letter-spacing: 1.2px; color: var(--text-3); opacity: .55; border: 1px solid var(--border);
     padding: 2px 8px; border-radius: 99px; }
 
-  /* ---------- journey route (railway-style continuous section rail) ---------- */
-  #route { position: absolute; left: 50%; top: 76px; bottom: 96px; width: 2px; z-index: 0; pointer-events: none;
-    transform: translateX(-50%); opacity: .8;
-    background: repeating-linear-gradient(to bottom, rgba(139,92,246,.7) 0 14px, rgba(139,92,246,.14) 14px 30px); }
-  #route::before { content: ''; position: absolute; left: 0; top: 0; right: 0; height: 100%;
-    background: linear-gradient(to bottom, transparent, rgba(34,211,238,0) 40%, rgba(34,211,238,.95) 52%, rgba(232,121,249,0) 74%, transparent);
-    background-size: 2px 30%; background-repeat: no-repeat; background-position: 0 0%;
-    animation: rideDown 12s ease-in-out infinite alternate; }
-  #route::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 34px; transform: translateX(-50%);
-    background: repeating-linear-gradient(to bottom, transparent 0 112px, rgba(34,211,238,.28) 112px 124px);
-    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0, #000 30%, #000 70%, rgba(0,0,0,0) 100%);
-    mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0, #000 30%, #000 70%, rgba(0,0,0,0) 100%); }
-  @keyframes rideDown { to { background-position: 0 100%; } }
-  .route-node { position: absolute; left: 50%; top: 48px; z-index: 3; width: 12px; height: 12px; margin-left: -6px;
-    transform: rotate(45deg); border-radius: 3px; pointer-events: none;
-    background: linear-gradient(135deg, var(--cyan), var(--fuchsia));
-    box-shadow: 0 0 14px rgba(34,211,238,.9), 0 0 30px rgba(232,121,249,.6);
-    animation: nodePulse 2.6s ease-in-out infinite; }
-  @keyframes nodePulse { 0%,100% { box-shadow: 0 0 10px rgba(34,211,238,.7), 0 0 24px rgba(232,121,249,.5); } 50% { box-shadow: 0 0 24px rgba(34,211,238,1), 0 0 56px rgba(232,121,249,.95); } }
-  .route-node.final { width: 14px; height: 14px; margin-left: -7px; background: linear-gradient(135deg, var(--gold), var(--pink)); box-shadow: 0 0 16px rgba(244,196,61,.9), 0 0 36px rgba(244,114,182,.7); }
+  /* ---------- VisualSpine ----------
+     ONE page-level structural rail. Not repeated per section, never restarted.
+     Tunable from markup via custom properties on the element itself:
+     --spine-x (position), --spine-w (width), --spine-opacity, --node-size. */
+  .spine { position: absolute; left: var(--spine-x, 50%); top: 0; bottom: 0;
+    width: var(--spine-w, 1px); z-index: 0; pointer-events: none;
+    transform: translateX(-50%); opacity: var(--spine-opacity, 1);
+    background: var(--spine-color);
+    /* Never terminate hard — the rail dissolves into the page at both ends. */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 140px, #000 calc(100% - 200px), transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 140px, #000 calc(100% - 200px), transparent 100%); }
+
+  /* ---------- Hairline system ----------
+     One visual language for every boundary: section rules, card edges,
+     nav dividers, footer. 1px, low-opacity neutral, consistent alignment. */
+  .rule { position: relative; max-width: var(--container); margin: 0 auto; padding: 0 var(--gutter); }
+  .rule::before { content: ''; display: block; height: 1px;
+    background: linear-gradient(to right, transparent, var(--hair) 10%, var(--hair) 90%, transparent); }
+  /* SectionAnchor: the intersection point where a section meets the spine. */
+  .rule::after { content: ''; position: absolute; left: var(--spine-x, 50%); top: 50%;
+    width: var(--node-size, 5px); height: var(--node-size, 5px);
+    margin: calc(var(--node-size, 5px) / -2) 0 0 calc(var(--node-size, 5px) / -2);
+    border-radius: 50%; background: var(--node-color);
+    transition: background var(--tr-smooth), transform var(--tr-smooth); }
+  /* Restrained interaction: the node brightens as its section arrives. */
+  .rule.is-active::after { background: var(--node-active); transform: scale(1.25); }
 
   /* ---------- ask AI live cards ---------- */
   .ask-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -401,7 +416,7 @@
   .ask-cta .btn { padding: 14px 32px; font-size: 15px; }
 
   /* Ask AI: standalone section is mobile/tablet only; desktop uses the modal from the arsenal card */
-  @media (min-width: 1081px) { #askai { display: none; } }
+  @media (min-width: 1081px) { #askai, .rule--compact { display: none; } }
 
   /* Desktop: Ask AI ends the arsenal as an enlarged wide card (2 columns), paired with Unified Inbox */
   @media (min-width: 1081px) {
@@ -464,13 +479,20 @@
     .plan.pop { animation: none; transform: none; }
     .plan.pop:hover { transform: translateY(-4px) scale(1.02); }
     .ask-grid { grid-template-columns: 1fr; max-width: 600px; margin: 0 auto; }
-    #route, .route-node { display: none; }
+    /* Tablet: rail moves into the left gutter. Kept at 14px so it clears the
+       24px content gutter entirely and never sits under a link or heading. */
+    :root { --spine-x: 14px; }
+    .spine { --spine-opacity: .75; }
     .ai-panel { max-height: 92dvh; }
     .flow { grid-template-columns: repeat(2, 1fr); gap: 20px 14px; }
     .conn { display: none; }
     .stats { grid-template-columns: repeat(2, 1fr); }
   }
   @media (max-width: 720px) {
+    /* Phone: rail tucks into the gutter at 18px, inside the 24px content
+       padding, so it can never sit under text or a tap target. */
+    :root { --spine-x: 12px; --node-size: 4px; }
+    .spine { --spine-opacity: .6; }
     nav { flex-wrap: wrap; }
     .nav-links { order: 3; width: 100%; justify-content: space-between; gap: 14px; font-size: 13px; }
     .nav-links .btn { padding: 9px 16px; }
@@ -502,10 +524,10 @@
 </style>
 </head>
 <body>
-<div id="starfield" aria-hidden="true"></div>
 <div id="orbs" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
 <div id="grid" aria-hidden="true"></div>
-<div id="route" aria-hidden="true"></div>
+<!-- VisualSpine: one continuous structural rail for the whole page. -->
+<div class="spine" id="spine" aria-hidden="true"></div>
 <div id="progress" aria-hidden="true"></div>
 
 <header id="siteHeader">
@@ -611,8 +633,9 @@
   </div>
 </section>
 
+<div class="rule" aria-hidden="true"></div>
+
 <section class="cosmos" id="inbox">
-  <div class="route-node" aria-hidden="true"></div>
   <canvas id="sky" aria-hidden="true"></canvas>
   <div class="spark" aria-hidden="true"></div>
   <div class="scan" aria-hidden="true"></div>
@@ -645,8 +668,9 @@
   </div>
 </section>
 
+<div class="rule" aria-hidden="true"></div>
+
 <section id="flow">
-  <div class="route-node" aria-hidden="true"></div>
   <div class="wrap">
     <div class="sec-head reveal">
       <div class="kicker">The loop</div>
@@ -662,8 +686,9 @@
   </div>
 </section>
 
+<div class="rule" aria-hidden="true"></div>
+
 <section id="tools">
-  <div class="route-node" aria-hidden="true"></div>
   <div class="wrap">
     <div class="sec-head reveal">
       <div class="kicker">The arsenal</div>
@@ -675,8 +700,9 @@
   </div>
 </section>
 
+<div class="rule rule--compact" aria-hidden="true"></div>
+
 <section id="askai">
-  <div class="route-node" aria-hidden="true"></div>
   <div class="wrap">
     <div class="sec-head reveal">
       <div class="kicker">Try It Live — No Sign-Up</div>
@@ -692,8 +718,9 @@
   </div>
 </section>
 
+<div class="rule" aria-hidden="true"></div>
+
 <section id="pricing">
-  <div class="route-node" aria-hidden="true"></div>
   <div class="wrap">
     <div class="sec-head reveal">
       <div class="kicker">Pricing</div>
@@ -704,8 +731,9 @@
   </div>
 </section>
 
+<div class="rule" aria-hidden="true"></div>
+
 <section id="convert">
-  <div class="route-node final" aria-hidden="true"></div>
   <div class="wrap">
     <div class="convert reveal">
       <h2>Ready to <span class="grad">stop juggling tabs?</span></h2>
@@ -879,6 +907,13 @@ const io = new IntersectionObserver((entries) => {
   entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
 }, { threshold: 0.12 });
 document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// SectionAnchor: the spine node brightens when its section comes into view.
+// Two-way (no unobserve) so the rail stays alive scrolling back up.
+const spineIo = new IntersectionObserver((entries) => {
+  entries.forEach(en => en.target.classList.toggle('is-active', en.isIntersecting));
+}, { rootMargin: '-45% 0px -45% 0px' });
+document.querySelectorAll('.rule').forEach(el => spineIo.observe(el));
 
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
   document.documentElement.dataset.motion === 'off';
@@ -1182,27 +1217,6 @@ if (canvas && ctx && !reduced) {
   document.addEventListener('visibilitychange', () => { if (!document.hidden) draw(); });
 }
 
-// global starfield (subtle)
-const gfx = document.getElementById('starfield').getContext('2d');
-if (gfx && !reduced) {
-  const DPR = Math.min(2, window.devicePixelRatio || 1);
-  const resize = () => { gfx.canvas.width = innerWidth * DPR; gfx.canvas.height = innerHeight * DPR; };
-  resize();
-  window.addEventListener('resize', resize);
-  const gs = Array.from({ length: 70 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.1 + 0.3, p: Math.random() * Math.PI * 2, sp: 0.004 + Math.random() * 0.015 }));
-  const draw = () => {
-    gfx.clearRect(0, 0, gfx.canvas.width, gfx.canvas.height);
-    gs.forEach(s => {
-      s.p += s.sp;
-      gfx.beginPath();
-      gfx.fillStyle = `rgba(255,255,255,${0.25 + 0.45 * Math.abs(Math.sin(s.p))})`;
-      gfx.arc(s.x * gfx.canvas.width, s.y * gfx.canvas.height, s.r * DPR, 0, Math.PI * 2);
-      gfx.fill();
-    });
-    requestAnimationFrame(draw);
-  };
-  draw();
-}
 </script>
 </body>
 </html>
