@@ -151,10 +151,12 @@
   /* ---------- background layers ---------- */
   #nebula { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
   #orbs { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-  .orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: .5; will-change: transform; }
+  /* A single continuous tonal wash, not decorative blobs. Low enough that
+     it reads as background depth rather than as shapes on the page. */
+  .orb { position: absolute; border-radius: 50%; filter: blur(150px); opacity: .13; will-change: transform; }
   .orb.o1 { width: 54vmax; height: 54vmax; background: var(--purple); top: -22vmax; left: -14vmax; animation: orbA 26s ease-in-out infinite alternate; }
   .orb.o2 { width: 46vmax; height: 46vmax; background: var(--cyan); bottom: -20vmax; right: -16vmax; animation: orbB 34s ease-in-out infinite alternate-reverse; }
-  .orb.o3 { width: 40vmax; height: 40vmax; background: var(--fuchsia); top: 30%; left: 55%; opacity: .32; animation: orbC 30s ease-in-out infinite alternate; }
+  .orb.o3 { width: 40vmax; height: 40vmax; background: var(--fuchsia); top: 30%; left: 55%; display: none; }
   @keyframes orbA { to { transform: translate(8vmax, 6vmax) scale(1.2); } }
   @keyframes orbB { to { transform: translate(-9vmax, -7vmax) scale(1.25); } }
   @keyframes orbC { to { transform: translate(-6vmax, 8vmax) scale(1.15); } }
@@ -282,9 +284,28 @@
   /* ---------- sections ---------- */
   section { padding: 84px 0; position: relative; }
   .sec-head { text-align: center; max-width: 620px; margin: 0 auto 48px; }
-  .sec-head .kicker { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--cyan); font-weight: 700; margin-bottom: 12px; }
+  .sec-head .kicker { font-size: 11.5px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-3);
+    font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; justify-content: center; }
+  .sec-head .kicker::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex: none; }
   .sec-head h2 { font-size: clamp(28px, 4.2vw, 42px); font-weight: 700; margin-bottom: 12px; }
   .sec-head p { color: var(--text-2); font-size: 15.5px; }
+
+  /* Alternating layout: heading column left, content right. The heading
+     sticks while its content scrolls, anchoring the section to the spine. */
+  .split { display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr); gap: 64px; align-items: start; }
+  .split .sec-head { text-align: left; margin: 0; max-width: 400px; position: sticky; top: 104px; }
+  .split .sec-head .kicker { justify-content: flex-start; }
+  .split .faq-list { margin: 0; max-width: none; }
+  .split .flow { grid-template-columns: 1fr 1fr; }
+  .split .step:nth-child(3) { border-left: 0; padding-left: 0; }
+  @media (max-width: 900px) {
+    .split { grid-template-columns: 1fr; gap: 30px; }
+    .split .sec-head { position: static; max-width: none; }
+    .split .flow { grid-template-columns: 1fr; }
+    /* Stacked steps separate with a top rule; a left rule reads wrong vertically. */
+    .flow .step, .split .flow .step:nth-child(3) { border-left: 0; border-top: 1px solid var(--hair); padding: 20px 0 22px; }
+    .flow .step:first-child { border-top: 0; padding-top: 4px; }
+  }
 
   /* reveal */
   .reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s cubic-bezier(.22,1,.36,1), transform .7s cubic-bezier(.22,1,.36,1); }
@@ -368,14 +389,16 @@
   .ibx-point::before { content: '✓'; color: var(--green); font-weight: 800; }
 
   /* ---------- workflow ---------- */
-  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; position: relative; }
-  .step { border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--border); padding: 22px; position: relative; transition: var(--tr-smooth); }
-  .step:hover { border-color: var(--cyan); transform: translateY(-4px); box-shadow: 0 14px 40px rgba(34,211,238,.16); }
-  .step .n { font-family: var(--font-d); font-size: 12px; font-weight: 700; letter-spacing: 1.6px; color: var(--cyan); }
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; position: relative; }
+  /* Structure by hairline and alignment rather than by card. */
+  .step { padding: 4px 24px 26px; position: relative; border-left: 1px solid var(--hair); transition: var(--tr-smooth); }
+  .step:first-child { border-left: 0; padding-left: 0; }
+  .step:hover { border-left-color: var(--hair-3); }
+  .step .n { font-family: var(--font-d); font-size: 12px; font-weight: 700; letter-spacing: 1.6px; color: var(--text-3); }
   .step h4 { margin: 12px 0 6px; font-size: 16px; }
   .step p { font-size: 12.5px; color: var(--text-2); }
   .step svg { position: absolute; right: 18px; top: 20px; width: 18px; height: 18px; color: var(--text-3); }
-  .conn { position: absolute; right: 16px; top: 22px; color: var(--fuchsia); font-weight: 800; }
+  .conn { display: none; }
   .conn::after { content: '→'; }
   .step:last-child .conn, .step:nth-child(4) .conn { display: none; }
 
@@ -796,6 +819,7 @@
 
 <section id="flow">
   <div class="wrap">
+    <div class="split">
     <div class="sec-head reveal">
       <div class="kicker">The loop</div>
       <h2>From lead to a closed deal — <span class="grad">on rails</span></h2>
@@ -806,6 +830,7 @@
       <div class="step reveal" data-d="1"><span class="n">02 · QUALIFY</span><h4>Qualify</h4><p>Drag leads from new → contacted → qualified, with value attached at each step.</p><span class="conn"></span></div>
       <div class="step reveal" data-d="2"><span class="n">03 · CREATE</span><h4>Create</h4><p>AI writes your content, meta, ads, swipes and campaigns while you sleep.</p><span class="conn"></span></div>
       <div class="step reveal" data-d="3"><span class="n">04 · CLOSE</span><h4>Close</h4><p>Reply everywhere from the Unified Inbox and watch closed value climb.</p><span class="conn"></span></div>
+    </div>
     </div>
   </div>
 </section>
@@ -859,6 +884,7 @@
 
 <section id="faq">
   <div class="wrap">
+    <div class="split">
     <div class="sec-head reveal">
       <div class="kicker">FAQ</div>
       <h2>Questions, <span class="grad">answered straight</span></h2>
@@ -885,6 +911,7 @@
         <summary>Do I need to install anything?</summary>
         <div class="a">No. EzyViral OS runs in the browser and inside Telegram. There is nothing to download or self-host to get started.</div>
       </details>
+    </div>
     </div>
   </div>
 </section>
