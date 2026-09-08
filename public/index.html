@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-build="aios-r2">
+<html lang="en" data-build="aios-r3">
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -338,14 +338,18 @@
   .build-stamp { font-size: 10px; letter-spacing: 1.2px; color: var(--text-3); opacity: .55; border: 1px solid var(--border);
     padding: 2px 8px; border-radius: 99px; }
 
-  /* ---------- journey route (railway-style spine) ---------- */
+  /* ---------- journey route (railway-style continuous section rail) ---------- */
   #route { position: absolute; left: 50%; top: 76px; bottom: 96px; width: 2px; z-index: 0; pointer-events: none;
-    transform: translateX(-50%); opacity: .45;
-    background: repeating-linear-gradient(to bottom, rgba(139,92,246,.6) 0 12px, transparent 12px 26px); }
+    transform: translateX(-50%); opacity: .8;
+    background: repeating-linear-gradient(to bottom, rgba(139,92,246,.7) 0 14px, rgba(139,92,246,.14) 14px 30px); }
   #route::before { content: ''; position: absolute; left: 0; top: 0; right: 0; height: 100%;
     background: linear-gradient(to bottom, transparent, rgba(34,211,238,0) 40%, rgba(34,211,238,.95) 52%, rgba(232,121,249,0) 74%, transparent);
     background-size: 2px 30%; background-repeat: no-repeat; background-position: 0 0%;
     animation: rideDown 12s ease-in-out infinite alternate; }
+  #route::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 34px; transform: translateX(-50%);
+    background: repeating-linear-gradient(to bottom, transparent 0 112px, rgba(34,211,238,.28) 112px 124px);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0, #000 30%, #000 70%, rgba(0,0,0,0) 100%);
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0, #000 30%, #000 70%, rgba(0,0,0,0) 100%); }
   @keyframes rideDown { to { background-position: 0 100%; } }
   .route-node { position: absolute; left: 50%; top: 48px; z-index: 3; width: 12px; height: 12px; margin-left: -6px;
     transform: rotate(45deg); border-radius: 3px; pointer-events: none;
@@ -392,19 +396,24 @@
   .ask-input button:hover { transform: scale(1.1); }
   .ask-input button:disabled { opacity: .5; cursor: wait; transform: none; }
   .ask-note { text-align: center; font-size: 12px; color: var(--text-3); margin-top: 18px; }
+  .ask-cta { text-align: center; margin-top: 24px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .ask-cta .btn { padding: 14px 32px; font-size: 15px; }
 
   /* Ask AI: standalone section is mobile/tablet only; desktop uses the modal from the arsenal card */
   @media (min-width: 1081px) { #askai { display: none; } }
 
-  .tool-chat { cursor: pointer; }
-  .tool-chat .try { position: absolute; top: 16px; right: 16px; font-size: 10px; font-weight: 800; letter-spacing: .6px;
+  /* Ask AI arsenal card: same cell size as every other tool, CTA flows inside the card (no overlap) */
+  .tool.tool-chat { cursor: pointer; display: flex; flex-direction: column; }
+  .tool.tool-chat p { flex: 1; }
+  .tool.tool-chat .try { margin-top: auto; align-self: flex-start; font-size: 11px; font-weight: 800; letter-spacing: .4px;
     text-transform: uppercase; color: var(--green); border: 1px solid rgba(11,217,126,.5); background: rgba(11,217,126,.08);
-    padding: 5px 11px; border-radius: 999px; animation: pulse 2.2s infinite; display: inline-flex; align-items: center; gap: 5px; }
-  .tool-chat .try::before { content: '💬'; font-size: 11px; line-height: 1; }
-  .tool-chat:hover { border-color: var(--green); box-shadow: 0 0 26px rgba(11,217,126,.18); }
-  .tool-chat .ic svg { color: var(--green); }
-  .tool-chat:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
-  .tool-chat.is-chat-open { border-color: var(--cyan); box-shadow: 0 0 30px rgba(34,211,238,.22); }
+    padding: 7px 13px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; animation: pulse 2.2s infinite;
+    pointer-events: none; white-space: nowrap; }
+  .tool.tool-chat .try::before { content: '💬'; font-size: 11px; line-height: 1; }
+  .tool.tool-chat:hover { border-color: var(--green); box-shadow: 0 0 26px rgba(11,217,126,.18); }
+  .tool.tool-chat .ic svg { color: var(--green); }
+  .tool.tool-chat:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+  .tool.tool-chat.is-chat-open { border-color: var(--cyan); box-shadow: 0 0 30px rgba(34,211,238,.22); }
 
   /* header chat button */
   .nav-links .askai-link { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: 13.5px; color: var(--green);
@@ -665,6 +674,10 @@
     </div>
     <div class="ask-grid" id="askGrid"></div>
     <p class="ask-note reveal">✦ Live free preview — a few calls per session, then the full Ask AI engine (with pipeline memory) unlocks with your plan.</p>
+    <div class="ask-cta reveal" data-d="1">
+      <a class="btn primary" href="/dashboard">Try It Free — No Card →</a>
+      <span style="font-size:11.5px;color:var(--text-3);">Full engine + pipeline memory unlock with your free account</span>
+    </div>
   </div>
 </section>
 
@@ -700,7 +713,7 @@
   <div class="wrap" style="width:100%;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
     <span class="brand" style="gap:8px;font-size:14px;"><img src="/img/EzyViralAi-mark-color.svg" alt=""> © 2026 EzyViral OS</span>
     <span>Built for solopreneurs who ship · Leads → pipeline → inbox → closed</span>
-    <span class="build-stamp" title="Deployment build id">v2</span>
+    <span class="build-stamp" title="Deployment build id">v3</span>
   </div>
 </footer>
 
@@ -787,8 +800,8 @@ if (grid) TOOLS.forEach((t, i) => {
   if (isChat) c.dataset.chat = '1';
   c.setAttribute('role', isChat ? 'button' : '');
   c.setAttribute('tabindex', isChat ? '0' : '');
-  c.innerHTML = (isChat ? '<span class="try">Try It Free →</span>' : '') +
-    `<div class="ic">${svg(t[0])}</div><h4>${t[1]}</h4><p>${t[2]}</p>`;
+  c.innerHTML = `<div class="ic">${svg(t[0])}</div><h4>${t[1]}</h4><p>${t[2]}</p>` +
+    (isChat ? '<span class="try">Try It Free →</span>' : '');
   grid.appendChild(c);
 });
 
