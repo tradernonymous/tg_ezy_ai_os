@@ -1,12 +1,14 @@
 import express from "express";
 import * as dotenv from "dotenv";
 import * as path from "path";
+import * as fs from "fs";
 import {
   getLeads,
   addLead,
   updateLead,
   deleteLead,
 } from "./leadStore";
+import { generateResponse } from "./aiProvider";
 
 dotenv.config();
 
@@ -76,7 +78,31 @@ app.delete("/api/leads/:id", async (req, res) => {
   }
 });
 
+// ---------- Chat (AI) ----------
+app.post("/api/chat", async (req, res) => {
+  try {
+    const { message } = req.body || {};
+    if (!message) return res.status(400).json({ error: "Message required" });
+    const reply = await generateResponse(message);
+    res.json({ reply: reply || "No response from AI." });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: "AI chat failed", detail: err?.message ?? "unknown" });
+  }
+});
+
 // ---------- Stats ----------
+function loadState(): Record<string, any> {
+  try {
+    const p = path.resolve(__dirname, '..', 'db', 'state.json');
+    fs.mkdirSync(path.dirname(p), { recursive: true });
+    const raw = fs.readFileSync(p, 'utf-8').trim();
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    return {};
+  }
+}
+
 app.get("/api/stats", async (_req, res) => {
   try {
     const leads = await getLeads();
@@ -85,7 +111,14 @@ app.get("/api/stats", async (_req, res) => {
       acc[cur.stage] = (acc[cur.stage] || 0) + 1;
       return acc;
     }, {});
-    res.json({ total, byStage });
+    const state = loadState();
+    // Top user plan (first user with a plan set)
+    const plans = Object.values(state)
+      .map((s: any) => s?.plan)
+      .filter(Boolean);
+    const plan = plans[0] || 'free';
+    const aiCount = Object.values(state).reduce((acc: any, s: any) => acc + (s?.aiCount || 0), 0);
+    res.json({ total, byStage, plan, aiCount });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch stats" });

@@ -96,8 +96,11 @@ curl http://localhost:3000/api/stats
 
 --- 
 
-## 📈 Inspired by / Trending repos
+## 📈 Inspired by / Trending repos (referenced for design & structure)
 
+- **[tradernonymous/EzyAi](https://github.com/tradernonymous/EzyAi)** — Telegram bot structure, guided stage flows (`/watch`, `/fundamentals`, `/autopilot`), inline button menus, and persistent state patterns. Our bot adopts the same guided flow (`pair → style → risk`) with `Back/Cancel`, confirmation messages, and one-tap follow-ups.
+- **[jquery-lang-js](https://github.com/jquery-lang-js/jquery-lang-js)** — Client-side language switching via cookie/session persistence (`localStorage`) and dynamic JSON language packs (`public/lang/en.json`, etc.). Our `/lang` submenu uses the same instant-switch pattern (no reload) and stores selection in `db/state.json`.
+- **[filament-language-switch](https://github.com/filamentphp/filament)** — Categorized submenu layout (`mainMenu` categories: Stats & Leads, Marketing, Tools & Auto, Language, Settings) with `Back` navigation. Our bot menus follow the same categorized structure with independent submenu cards (`planSubMenu`, `personaSubMenu`, etc.).
 - **[telegraf/telegraf](https://github.com/telegraf/telegraf)** – Feature‑rich Telegram bot library.  
 - **[langchain-ai/langchainjs](https://github.com/langchain-ai/langchainjs)** – LLM orchestration, free and open‑source.  
 - **[twentycrm/twenty](https://github.com/twentycrm/twenty)** – AI‑native CRM, lead pipeline ideas.  
