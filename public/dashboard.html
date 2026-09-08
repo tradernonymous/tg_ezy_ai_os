@@ -243,6 +243,36 @@
     footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; color: var(--muted-2); font-size: 12px; flex-wrap: wrap; gap: 10px; }
     footer a { color: var(--accent); }
 
+    /* ---------- Lead modal ---------- */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
+      display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      width: 100%; max-width: 560px; background: var(--panel);
+      border: 1px solid var(--border-2); border-radius: 12px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto;
+    }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+    .modal-head h2 { font-size: 14px; font-weight: 600; }
+    .modal-body { padding: 18px; }
+    .modal-error { display: none; background: rgba(245,59,84,0.1); border: 1px solid rgba(245,59,84,0.35); color: #ff7d8f; padding: 8px 12px; border-radius: 8px; font-size: 12px; margin-bottom: 12px; }
+    .modal-error.show { display: block; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-field { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted); font-weight: 600; }
+    .form-field b { color: var(--accent); }
+    .form-field.span-2 { grid-column: span 2; }
+    .form-field input, .form-field select {
+      padding: 9px 11px; border-radius: 8px; border: 1px solid var(--border-2);
+      background: var(--panel-2); color: var(--text); font-family: inherit; font-size: 13px; outline: none;
+    }
+    .form-field input:focus, .form-field select:focus { border-color: var(--accent); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+    .btn.danger { background: rgba(245,59,84,0.1); border-color: rgba(245,59,84,0.35); color: #ff7d8f; }
+    .btn.danger:hover { background: rgba(245,59,84,0.18); }
+    .row-action { padding: 5px 9px; font-size: 11px; }
+
     /* View switching */
     .view { display: none; }
     .view.active { display: block; }
@@ -257,6 +287,8 @@
       aside { width: 100%; height: auto; position: static; flex-direction: column; }
       .nav { flex-direction: row; flex-wrap: wrap; }
       .board { grid-template-columns: repeat(4, 240px); }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-field.span-2 { grid-column: span 1; }
     }
   </style>
 </head>
@@ -377,7 +409,7 @@
       <!-- Leads -->
       <section class="view" id="view-leads">
         <div class="panel">
-          <div class="panel-head"><h2>📂 All Leads</h2><span class="sub" id="leadsSub">0 records</span></div>
+          <div class="panel-head"><h2>📂 All Leads</h2><span class="sub" id="leadsSub">0 records</span><button class="btn primary small" onclick="openAddLead();">➕ Add Lead</button></div>
           <div class="table-wrap">
             <table>
               <thead><tr><th>Name</th><th>Channel</th><th>Stage</th><th>Value</th><th>Telegram ID</th><th>Created</th><th>Updated</th><th>Action</th></tr></thead>
@@ -432,6 +464,48 @@
           </div>
         </div>
       </section>
+
+      <!-- Lead modal (add / edit) -->
+      <div class="modal-backdrop" id="leadModalBackdrop" onclick="if(event.target===this) closeLeadModal();">
+        <div class="modal">
+          <div class="modal-head"><h2 id="leadModalTitle">➕ Add Lead</h2><button class="btn small" onclick="closeLeadModal();">✕</button></div>
+          <div class="modal-body">
+            <div class="modal-error" id="leadModalError"></div>
+            <form onsubmit="submitLeadModal(event); return false;">
+              <div class="form-grid">
+                <label class="form-field"><span>Name <b>*</b></span><input id="fName" required placeholder="e.g. Sofia Reyes" /></label>
+                <label class="form-field"><span>Telegram ID <b>*</b></span><input id="fTelegramId" required placeholder="e.g. 6282941580" /></label>
+                <label class="form-field"><span>Stage</span>
+                  <select id="fStage">
+                    <option value="new">🟢 New</option>
+                    <option value="contacted">🟡 Contacted</option>
+                    <option value="qualified">🟦 Qualified</option>
+                    <option value="closed">🟨 Closed</option>
+                  </select>
+                </label>
+                <label class="form-field"><span>Channel</span>
+                  <select id="fChannel">
+                    <option value="telegram">✈️ Telegram</option>
+                    <option value="email">📧 Email</option>
+                    <option value="whatsapp">💬 WhatsApp</option>
+                    <option value="tiktok">🎵 TikTok</option>
+                    <option value="meta">🧿 Meta</option>
+                  </select>
+                </label>
+                <label class="form-field"><span>Email</span><input id="fEmail" type="email" placeholder="name@company.com" /></label>
+                <label class="form-field"><span>Phone</span><input id="fPhone" placeholder="+1 555 000 0000" /></label>
+                <label class="form-field"><span>Value ($)</span><input id="fValue" type="number" min="0" step="0.01" placeholder="e.g. 1200" /></label>
+                <label class="form-field"><span>Owner</span><input id="fOwner" placeholder="you" /></label>
+                <label class="form-field span-2"><span>Tags (comma separated)</span><input id="fTags" placeholder="hot, enterprise" /></label>
+              </div>
+              <div class="modal-actions">
+                <button type="button" class="btn" onclick="closeLeadModal();">Cancel</button>
+                <button type="submit" class="btn primary" id="leadModalSubmit">Add Lead</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
 
       <footer>
         <span>Built with ❤️ — <strong>TG Ezy AI OS</strong> · Free stack: Mistral + JSON store + Express</span>
@@ -589,8 +663,12 @@
       const ch = CHANNEL_INFO[l.channel] || CHANNEL_INFO.telegram;
       const value = (l.value && l.value > 0) ? '$' + Number(l.value).toLocaleString() : '—';
       const action = withAction
-        ? `<span class="stage-arrows" style="margin:0;">
-             ${STAGES.map(s => `<button onclick="moveLead('${l.id}','${s}');">${STAGE_META[s].emoji}</button>`).join('')}
+        ? `<span style="display:flex; gap:6px; align-items:center;">
+             <span class="stage-arrows" style="margin:0; flex-shrink:0;">
+               ${STAGES.map(s => `<button onclick="moveLead('${l.id}','${s}');">${STAGE_META[s].emoji}</button>`).join('')}
+             </span>
+             <button class="btn small row-action" onclick="openEditLead('${l.id}');" style="flex-shrink:0;">✏️ Edit</button>
+             <button class="btn small row-action danger" onclick="deleteLead('${l.id}');" style="flex-shrink:0;">🗑️</button>
            </span>`
         : '';
       return `<tr>
@@ -608,13 +686,13 @@
     function renderLeadsTable() {
       $('leadsTable').innerHTML = leads.length
         ? leads.map(l => leadRow(l, true)).join('')
-        : '<tr><td colspan="6" class="empty">No leads yet.</td></tr>';
+        : '<tr><td colspan="8" class="empty">No leads yet. Click "➕ Add Lead" to create one.</td></tr>';
     }
     function renderRecentTable() {
       const recent = leads.slice(0, 8);
       $('recentTable').innerHTML = recent.length
         ? recent.map(l => leadRow(l, false)).join('')
-        : '<tr><td colspan="5" class="empty">No leads yet.</td></tr>';
+        : '<tr><td colspan="7" class="empty">No leads yet.</td></tr>';
     }
 
     function renderPipelineBoard() {
@@ -662,6 +740,114 @@
       await api('/api/leads/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stage: next }) });
       loadDashboard();
     }
+
+    // ---------- Lead modal (add / edit / delete) ----------
+    let editingLeadId = null;
+    function showLeadError(msg) {
+      const e = $('leadModalError');
+      e.textContent = msg || '';
+      e.classList.toggle('show', !!msg);
+    }
+    function setModalField(id, value) {
+      $(id).value = value === undefined || value === null ? '' : value;
+    }
+    function resetLeadForm() {
+      setModalField('fName', '');
+      setModalField('fTelegramId', '');
+      $('fStage').value = 'new';
+      $('fChannel').value = 'telegram';
+      setModalField('fEmail', '');
+      setModalField('fPhone', '');
+      setModalField('fValue', '');
+      setModalField('fOwner', '');
+      setModalField('fTags', '');
+      showLeadError('');
+    }
+    function openAddLead() {
+      editingLeadId = null;
+      resetLeadForm();
+      $('leadModalTitle').textContent = '➕ Add Lead';
+      $('leadModalSubmit').textContent = 'Add Lead';
+      $('leadModalBackdrop').classList.add('open');
+      setTimeout(() => $('fName').focus(), 30);
+    }
+    function openEditLead(id) {
+      const l = leads.find(x => x.id === id);
+      if (!l) return;
+      editingLeadId = id;
+      setModalField('fName', l.name);
+      setModalField('fTelegramId', l.telegramId);
+      $('fStage').value = l.stage || 'new';
+      $('fChannel').value = l.channel || 'telegram';
+      setModalField('fEmail', l.email);
+      setModalField('fPhone', l.phone);
+      setModalField('fValue', l.value);
+      setModalField('fOwner', l.owner);
+      setModalField('fTags', Array.isArray(l.tags) ? l.tags.join(', ') : '');
+      showLeadError('');
+      $('leadModalTitle').textContent = '✏️ Edit Lead';
+      $('leadModalSubmit').textContent = 'Save Changes';
+      $('leadModalBackdrop').classList.add('open');
+      setTimeout(() => $('fName').focus(), 30);
+    }
+    function closeLeadModal() {
+      $('leadModalBackdrop').classList.remove('open');
+      editingLeadId = null;
+    }
+    async function submitLeadModal(e) {
+      e.preventDefault();
+      showLeadError('');
+      const telegramId = $('fTelegramId').value.trim();
+      const name = $('fName').value.trim();
+      if (!telegramId) { showLeadError('Telegram ID is required.'); $('fTelegramId').focus(); return; }
+      if (!name) { showLeadError('Name is required.'); $('fName').focus(); return; }
+      const tags = $('fTags').value.split(',').map(t => t.trim()).filter(Boolean);
+      const payload = {
+        name,
+        telegramId,
+        stage: $('fStage').value,
+        channel: $('fChannel').value,
+        email: $('fEmail').value.trim() || undefined,
+        phone: $('fPhone').value.trim() || undefined,
+        value: $('fValue').value === '' ? undefined : Number($('fValue').value),
+        owner: $('fOwner').value.trim() || undefined,
+        tags: tags.length ? tags : undefined,
+      };
+      const submitBtn = $('leadModalSubmit');
+      const original = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving…';
+      try {
+        if (editingLeadId) {
+          const r = await api('/api/leads/' + editingLeadId, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          if (r && r.error) { showLeadError(r.error); return; }
+        } else {
+          const r = await api('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          if (r && r.error) { showLeadError(r.error); return; }
+        }
+        closeLeadModal();
+        loadDashboard();
+      } catch (err) {
+        showLeadError('✖ Could not save lead. Check the server is running.');
+        console.error(err);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = original;
+      }
+    }
+    async function deleteLead(id) {
+      const l = leads.find(x => x.id === id);
+      if (!l) return;
+      if (!confirm('Delete lead "' + (l.name || 'Unnamed') + '" (' + l.telegramId + ')?')) return;
+      try {
+        await api('/api/leads/' + id, { method: 'DELETE' });
+        loadDashboard();
+      } catch (err) {
+        console.error(err);
+        alert('Could not delete lead. Check the server is running.');
+      }
+    }
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLeadModal(); });
 
     // ---------- Tools (mirrors bot submenus) ----------
     const TOOLS = [
