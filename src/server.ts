@@ -157,6 +157,7 @@ app.get("/api/auth/config", (_req, res) => {
     providers: ["google", "telegram", "magic"],
     googleClientId: process.env.GOOGLE_CLIENT_ID || "",
     telegramBot: process.env.BOT_USERNAME || "",
+    telegramConfigured: String(process.env.BOT_TOKEN || "").trim().length >= 10,
     magicDevPreview: process.env.MAGIC_DEV_PREVIEW === "true",
     emailConfigured: emailConfigured(),
   });
@@ -226,16 +227,30 @@ app.post("/api/auth/telegram", async (req, res) => {
 });
 
 function verifyTelegramHash(data: Record<string, any>): boolean {
-  const secret = process.env.BOT_TOKEN;
-  if (!secret) return false;
-  const secretKey = crypto.createHash("sha256").update(secret).digest();
-  const params = Object.keys(data)
-    .filter((k) => k !== "hash")
-    .sort()
-    .map((k) => `${k}=${data[k]}`)
-    .join("\n");
-  const hmac = crypto.createHmac("sha256", secretKey).update(params).digest("hex");
-  return crypto.timingSafeEqual(Buffer.from(hmac, "hex"), Buffer.from(String(data.hash || ""), "hex"));
+  const secret = String(process.env.BOT_TOKEN || "").trim();
+  if (secret.length < 10) {
+    console.error("[auth] telegram: BOT_TOKEN missing or too short on server");
+    return false;
+  }
+  try {
+    const secretKey = crypto.createHash("sha256").update(secret).digest();
+    const params = Object.keys(data)
+      .filter((k) => k !== "hash")
+      .sort()
+      .map((k) => `${k}=${data[k]}`)
+      .join("\n");
+    const hmac = crypto.createHmac("sha256", secretKey).update(params).digest("hex");
+    const provided = String(data.hash || "");
+    if (!provided) return false;
+    if (hmac.length !== provided.length || !crypto.timingSafeEqual(Buffer.from(hmac, "hex"), Buffer.from(provided, "hex"))) {
+      console.error(`[auth] telegram: hash mismatch (token len ${secret.length}, recv fields ${Object.keys(data).length}). BOT_TOKEN on server != bot token that signed this widget.`);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("[auth] telegram: verify error", e);
+    return false;
+  }
 }
 
 app.post("/api/auth/magic/request", async (req, res) => {
