@@ -8,6 +8,8 @@ import { generateResponse } from './aiProvider';
 import { loadState, saveState } from './stateStore';
 import { MENUS, MENU_PARENT, ALL_LABELS, labelVariants, localize, normalizeLang } from './menus';
 import { unreadTotals } from './inbox';
+import { getAccountByProviderKey } from './accountStore';
+import { createCheckoutForChatId, activateAccount, priceLabel, usdtConfigured } from './billing';
 
 dotenv.config();
 
@@ -48,13 +50,20 @@ function getUid(ctx: any): string {
 // ---------- Monetization config (unified 5-tier via plans.ts) ----------
 const ADMIN_TELEGRAM_ID = (process.env.ADMIN_TELEGRAM_ID || '').toString();
 const PRO_ACCESS_IDS = (process.env.PRO_ACCESS_IDS || '').split(',').map((s) => s.trim()).filter(Boolean);
-import { PLANS as ALL_PLANS, mapLegacy, tierIndex } from './plans';
+import { PLANS as ALL_PLANS, mapLegacy, tierIndex, isTier } from './plans';
 const PLANS = ALL_PLANS.map((p) => ({ tier: p.tier, label: p.label, price: p.price.replace('/mo', ''), features: p.features.join(', ') }));
 const PRO_FEATURES = ['📝 Content', '✉️ Campaign', '🔑 Keywords', '🧲 Lead Magnet', '⚙️ Workflow', '📈 Growth', '📦 Export CSV'];
 
 function isPayingUser(id?: string): boolean {
   if (!id) return false;
   if (PRO_ACCESS_IDS.includes(id)) return true;
+  // Payments (Stripe / USDT) are recorded on the linked web account (accounts.json);
+  // the bot reads it at gate time so web and Telegram stay in sync across processes.
+  const tgAccount = getAccountByProviderKey('telegram', id);
+  if (tgAccount && tierIndex(tgAccount.plan) > 0) {
+    if (tgAccount.planUntil && new Date(tgAccount.planUntil).getTime() <= Date.now()) return false; // expired
+    return true;
+  }
   const s = userState[id];
   if (!s) return false;
   const tier = mapLegacy(s.plan);
@@ -1005,15 +1014,17 @@ bot.command('plan', (ctx: any) => {
   const args = (ctx.message as any).text.split(' ').slice(1);
   const id = getUid(ctx);
   if (args[0] === 'set' && args[1]) {
-    if (id) {
+    if (id && isAdmin(id)) {
       userState[id] = userState[id] || {};
       userState[id].plan = args[1].toLowerCase();
       saveState(userState);
       ctx.reply(`💳 Plan updated to *${args[1]}*`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
+    } else {
+      ctx.reply('⛔ Admin only — purchase a plan with /plans.', showMenu(ctx, 'main') as any);
     }
   } else {
-    const label = getPlanLabel(id ? userState[id] : undefined);
-    ctx.reply(`💳 *Subscription Plan* — Current: *${label}*\nUse /plan set <tier> or /plans to upgrade.`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
+    const label = currentLabel(ctx);
+    ctx.reply(`💳 *Subscription Plan* — Current: *${label}*\nUpgrade with /plans.`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
   }
 });
 bot.command('persona', (ctx: any) => {
@@ -1109,18 +1120,115 @@ bot.command('leadmagnet', async (ctx: any) => {
 
 // ---------- /plans (EzyAi-style pricing) ------------------------------------------
 
-bot.command('plans', (ctx: any) => {
+function currentLabel(ctx: any): string {
   const id = getUid(ctx);
-  const label = getPlanLabel(id ? userState[id] : undefined);
-  const plansText = PLANS.map((p) => `\n*${p.label}* — ${p.price}\n• ${p.features}`).join('\n');
-  const inline = {
+  const acc = id ? getAccountByProviderKey('telegram', id) : undefined;
+  if (acc && tierIndex(acc.plan) > 0) {
+    return PLANS.find((p) => p.tier === acc.plan)?.label || String(acc.plan).toUpperCase();
+  }
+  return getPlanLabel(id ? userState[id] : undefined);
+}
+
+function plansInline(): any {
+  return {
     inline_keyboard: [
-      ...PLANS.filter((p) => p.tier !== 'free').map((p) => [{ text: `Choose ${p.label}`, callback_data: `plan_${p.tier}` }]),
+      ...PLANS.filter((p) => p.tier !== 'free').map((p) => [{ text: `Choose ${p.label} · ${p.price}`, callback_data: `plan_${p.tier}` }]),
       [{ text: '🎁 Claim FREE 3-day trial', callback_data: 'trial_claim' }],
       [{ text: '🎫 Redeem a code', callback_data: 'redeem_prompt' }],
     ],
   };
-  ctx.reply(`💳 *Plans*\nCurrent: *${label}*${plansText}\n\nUse buttons to switch or claim your free trial.`, { parse_mode: 'Markdown', reply_markup: inline } as any);
+}
+
+function sendPlansMessage(ctx: any, label: string) {
+  const plansText = PLANS.map((p) => `\n*${p.label}* — ${p.price}\n• ${p.features}`).join('\n');
+  ctx.reply(`💳 *Plans*\nCurrent: *${label}*${plansText}\n\nTap a plan to pay securely by card (or choose USDT), claim your free trial, or redeem a code.`, { parse_mode: 'Markdown', reply_markup: plansInline() } as any);
+}
+
+bot.command('plans', (ctx: any) => {
+  sendPlansMessage(ctx, currentLabel(ctx));
+});
+
+bot.action('plans_back', async (ctx: any) => {
+  await ctx.answerCbQuery();
+  await ctx.editMessageText(`💳 *Plans*\nCurrent: *${currentLabel(ctx)}*`, { parse_mode: 'Markdown', reply_markup: plansInline() } as any);
+});
+
+bot.action(/^plan_/, async (ctx: any) => {
+  const tier = (ctx.match?.[0] as string).replace('plan_', '');
+  const id = getUid(ctx);
+  if (!isTier(tier) || tier === 'free') {
+    await ctx.answerCbQuery('Pick a paid plan');
+    return;
+  }
+  const p = PLANS.find((x) => x.tier === tier);
+  await ctx.answerCbQuery(`Checkout: ${p?.label}`);
+  const res = await createCheckoutForChatId(id, ctx.from?.first_name, tier, 'stripe');
+  if (res.status === 'ok') {
+    await ctx.editMessageText(
+      `💳 *${p?.label}* — ${priceLabel(tier)}\n\nPay securely by card below. 30 days of access start right after confirmation.`,
+      { parse_mode: 'Markdown', reply_markup: {
+        inline_keyboard: [
+          [{ text: `💳 Pay ${p?.price} by card`, url: res.url }],
+          [{ text: '₮ Pay with USDT', callback_data: `pay_usdt_${tier}` }, { text: '↩️ Back', callback_data: 'plans_back' }],
+        ],
+      } } as any
+    );
+    return;
+  }
+  if (res.status === 'usdt-manual') {
+    await ctx.editMessageText(`₮ *${p?.label}* — ${priceLabel(tier)}\n\nUSDT (TRC-20) to:\n\n\`${res.usdtAddress}\`\n\nSend the exact amount with your Telegram username in the memo, then tap confirm.`, { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '✅ Done — confirm my payment', callback_data: `pay_usdt_${tier}` }, { text: '↩️ Back', callback_data: 'plans_back' }]] } } as any);
+    return;
+  }
+  if (res.status === 'pending-config') {
+    await ctx.editMessageText('💤 Payments are being connected — try again in a moment, claim your free trial, or redeem a code.', { reply_markup: plansInline() } as any);
+    return;
+  }
+  await ctx.editMessageText('❌ Could not start checkout. Try again shortly.', { reply_markup: plansInline() } as any);
+});
+
+bot.action(/^pay_usdt_/, async (ctx: any) => {
+  const tier = (ctx.match?.[0] as string).replace('pay_usdt_', '');
+  const p = PLANS.find((x) => x.tier === tier);
+  const address = process.env.USDT_ADDRESS;
+  if (!address || !usdtConfigured()) {
+    await ctx.answerCbQuery('USDT not configured yet');
+    return;
+  }
+  await ctx.answerCbQuery('USDT instructions');
+  await ctx.reply(`₮ *USDT payment — ${p?.label}* (${priceLabel(tier)})\n\nSend the exact amount in USDT (TRC-20) to:\n\n\`${address}\`\n\n📝 Put your Telegram *username* in the memo.\n\nOnce you've sent it, ping the admin — your plan is activated on confirmation.`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
+});
+
+// ---------- Admin: confirm a USDT / manual payment ----------
+
+bot.command('confirmpay', (ctx: any) => {
+  const adm = getUid(ctx);
+  if (!isAdmin(adm)) {
+    ctx.reply('⛔ Admin only.', showMenu(ctx, 'main') as any);
+    return;
+  }
+  const args = ((ctx.message as any).text || '').split(' ').slice(1);
+  const [uid, tier] = args;
+  if (!uid || !isTier(tier) || tier === 'free') {
+    ctx.reply('Usage: /confirmpay <telegramUid> <tier>', showMenu(ctx, 'main') as any);
+    return;
+  }
+  const account = getAccountByProviderKey('telegram', uid.toLowerCase());
+  if (!account) {
+    ctx.reply(`No linked web account for Telegram id *${uid}* yet.`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
+    return;
+  }
+  const updated = activateAccount(account.id, tier);
+  if (!updated) {
+    ctx.reply('Could not activate that plan.', showMenu(ctx, 'main') as any);
+    return;
+  }
+  // keep the bot's own view of the chat in sync
+  if (userState[uid]) {
+    userState[uid].plan = tier;
+    userState[uid].proUntil = updated.planUntil;
+    saveState(userState);
+  }
+  ctx.reply(`✅ Activated *${PLANS.find((x) => x.tier === tier)?.label || tier}* for Telegram id *${uid}* until ${new Date(updated.planUntil || '').toDateString()}.`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
 });
 
 bot.action('redeem_prompt', async (ctx: any) => {

@@ -33,7 +33,7 @@ import {
 } from "./accountStore";
 import { signSession, verifySession, SESSION_COOKIE, sessionCookieOptions } from "./session";
 import { verifyMagicToken, requestMagicToken, emailConfigured } from "./magic";
-import { createCheckout } from "./billing";
+import { createCheckout, confirmSession, handleStripeWebhook, recordUsdtPending, verifyStripeSignature } from "./billing";
 import { mapLegacy, tierIndex, TIERS, PLANS } from "./plans";
 import { gateFor } from "./toolGates";
 
@@ -41,6 +41,32 @@ dotenv.config();
 
 const app = express();
 app.disable("x-powered-by");
+
+// Stripe webhook needs the raw body for signature verification, so it is
+// registered before the global JSON body parser (raw → Buffer).
+app.post("/api/billing/webhook", express.raw({ type: () => true, limit: "2mb" }), async (req, res) => {
+  try {
+    const raw = Buffer.isBuffer(req.body) ? req.body.toString("utf-8") : String(req.body || "");
+    const secret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (secret && !verifyStripeSignature(raw, String(req.headers["stripe-signature"] || ""), secret)) {
+      res.status(401).json({ error: "Invalid signature" });
+      return;
+    }
+    let event: any;
+    try {
+      event = JSON.parse(raw);
+    } catch (e) {
+      res.status(400).json({ error: "Invalid payload" });
+      return;
+    }
+    const account = await handleStripeWebhook(event);
+    if (account) console.log(`[billing] webhook activated ${account.plan} for ${account.id}`);
+    res.json({ received: true });
+  } catch (err) {
+    res.status(400).json({ error: "Invalid payload" });
+  }
+});
+
 app.use(express.json({ limit: "100kb" }));
 
 // Static brand assets (logo, favicon)
@@ -581,10 +607,35 @@ app.post("/api/billing/checkout", requireAuth, async (req, res) => {
     const provider = String(req.body?.provider || "stripe");
     if (!TIERS.includes(tier as any)) return res.status(400).json({ error: "Unknown tier" });
     const result = await createCheckout(account, tier, provider);
+    if (result.status === "error") return res.status(400).json({ error: result.error });
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: "Billing failed" });
   }
+});
+
+app.post("/api/billing/confirm", requireAuth, async (req, res) => {
+  try {
+    const account = (req as any).account as Account;
+    const sessionId = String(req.body?.session_id || req.body?.sessionId || "");
+    if (!sessionId) return res.status(400).json({ error: "Missing session" });
+    const result = await confirmSession(account, sessionId);
+    if (result && "error" in result) return res.status(400).json({ error: result.error });
+    res.json({ status: "ok", plan: (result as Account).plan, planUntil: (result as Account).planUntil });
+  } catch (err) {
+    res.status(500).json({ error: "Billing failed" });
+  }
+});
+
+app.post("/api/billing/usdt/pending", requireAuth, async (req, res) => {
+  const account = (req as any).account as Account;
+  const tier = String(req.body?.tier || "");
+  const txid = req.body?.txid ? String(req.body.txid) : undefined;
+  if (!TIERS.includes(tier as any)) return res.status(400).json({ error: "Unknown tier" });
+  const entry = recordUsdtPending(account.id, tier, txid);
+  if (!entry) return res.status(400).json({ error: "USDT payments are not configured." });
+  const p = PLANS.find((x) => x.tier === tier);
+  res.json({ status: "pending", tier, amount: p?.price || "", usdtAddress: process.env.USDT_ADDRESS });
 });
 
 app.get("/api/billing/status", requireAuth, (_req, res) => {
