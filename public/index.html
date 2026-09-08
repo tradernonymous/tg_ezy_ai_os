@@ -567,21 +567,34 @@
 
   /* Desktop: Ask AI ends the arsenal as an enlarged wide card (2 columns), paired with Unified Inbox */
   @media (min-width: 1081px) {
-    .tool.tool-chat, .tool.tool-wide { grid-column: span 2; flex-direction: row; align-items: center; gap: 22px; padding: 24px 28px; min-height: 118px; }
-    .tool.tool-chat .ic, .tool.tool-wide .ic { width: 56px; height: 56px; border-radius: 16px; margin-bottom: 0; }
-    .tool.tool-chat .ic svg, .tool.tool-wide .ic svg { width: 26px; height: 26px; }
-    .tool.tool-chat .tt, .tool.tool-wide .tt { margin-top: 0; }
-    .tool.tool-chat h4, .tool.tool-wide h4 { font-size: 18px; }
-    .tool.tool-chat p, .tool.tool-wide p { font-size: 13.5px; max-width: 620px; }
-    .tool.tool-chat .try { margin-top: 0; align-self: center; margin-left: auto; padding: 10px 18px; font-size: 12px; }
+    .tool.tool-chat { grid-column: span 3; flex-direction: row; align-items: center; gap: 22px; padding: 26px 30px; min-height: 124px; }
+    .tool.tool-chat .ic { width: 56px; height: 56px; border-radius: 16px; margin-bottom: 0; }
+    .tool.tool-chat .ic svg { width: 26px; height: 26px; }
+    .tool.tool-chat .tt { margin-top: 0; }
+    .tool.tool-chat h4 { font-size: 18px; }
+    .tool.tool-chat p { font-size: 13.5px; max-width: 720px; }
+    .tool.tool-chat .try { margin-top: 0; align-self: center; margin-left: auto; padding: 11px 20px; font-size: 12px; }
+  }
+
+  /* Small-screen Ask AI entry: full-width button with a colourful animated fill. */
+  .tools-mcta { display: none; }
+  @media (max-width: 1080px) {
+    .tools-mcta { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 26px; }
+    .tools-mcta .btn.tools-mcta__btn { width: 100%; max-width: 460px; padding: 15px 22px; font-size: 15px; font-weight: 750;
+      background-image: linear-gradient(90deg, var(--green), var(--cyan), var(--purple), var(--fuchsia), var(--green));
+      background-size: 300% 100%; animation: specShift 6s linear infinite; color: #0a0518; border-color: rgba(255,255,255,.25); }
+    .tools-mcta__note { font-size: 12px; color: var(--text-3); }
   }
 
   /* Ask AI arsenal card: mobile/tablet = same cell size as every other tool, CTA flows inside the card (no overlap) */
   .tool.tool-chat { cursor: pointer; }
   .tool.tool-chat .try { margin-top: auto; align-self: flex-start; font-size: 11px; font-weight: 800; letter-spacing: .4px;
     text-transform: uppercase; color: var(--green); border: 1px solid rgba(11,217,126,.5); background: rgba(11,217,126,.08);
-    padding: 7px 13px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; animation: pulse 2.2s infinite;
-    pointer-events: none; white-space: nowrap; }
+    padding: 7px 13px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;
+    cursor: pointer; white-space: nowrap; transition: var(--tr-smooth);
+    background-image: linear-gradient(90deg, rgba(11,217,126,.18), rgba(34,211,238,.18), rgba(232,121,249,.18), rgba(11,217,126,.18));
+    background-size: 300% 100%; animation: specShift 5s linear infinite; }
+  .tool.tool-chat:hover .try, .tool.tool-chat .try:hover { color: var(--text); border-color: var(--green); transform: translateY(-1px); }
   .tool.tool-chat .try::before { content: '💬'; font-size: 11px; line-height: 1; }
   .tool.tool-chat:hover { border-color: var(--green); box-shadow: 0 0 26px rgba(11,217,126,.18); }
   .tool.tool-chat .ic svg { color: var(--green); }
@@ -845,6 +858,13 @@
       <p>One account, five honest tiers — starting free. Upgrade only when your pipeline earns it.</p>
     </div>
     <div class="tools" id="toolsGrid"></div>
+
+    <!-- Small screens only: the Ask AI card is a single small cell there, so the
+         chat gets its own full-width entry point instead of a tiny in-card pill. -->
+    <div class="tools-mcta">
+      <a class="btn primary tools-mcta__btn" href="#askai">💬 &nbsp;Try It Free — Ask AI Now</a>
+      <span class="tools-mcta__note">No card. Ask it anything about your funnel.</span>
+    </div>
     <div class="cta-row" style="margin-top:34px;"><a class="btn primary" href="/dashboard">Unlock The Full Arsenal →</a></div>
   </div>
 </section>
@@ -1012,13 +1032,13 @@ const TOOLS = [
   ['target','Campaigns','Launch and track campaigns without a separate tool.'],
   ['keywords','Keywords','Search angles handed to you on a plate.'],
   ['csv','CSV exports','Take your pipeline anywhere you need it.'],
-  ['chat','Ask AI','Your funnel on tap — ask anything about your leads.'],
-  ['inbox','Unified Inbox','Every channel, one glowing window. (Thinker)']
+  ['inbox','Unified Inbox','Every channel, one glowing window. (Thinker)'],
+  ['chat','Ask AI','Your funnel on tap — ask anything about your leads.']
 ];
 const grid = document.getElementById('toolsGrid');
 if (grid) TOOLS.forEach((t, i) => {
   const isChat = t[0] === 'chat';
-  const isWide = isChat || t[0] === 'inbox';
+  const isWide = isChat; // Unified Inbox is a normal cell; only Ask AI runs full width
   const c = document.createElement('div');
   c.className = 'tool reveal' + (isChat ? ' tool-chat' : '') + (isWide ? ' tool-wide' : '');
   c.dataset.d = String(i % 4);
