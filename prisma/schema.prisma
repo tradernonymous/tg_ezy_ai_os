@@ -1,3 +1,30 @@
+// ---------------------------------------------------------------------------
+// NOT IN USE. Nothing in this project reads this schema.
+//
+// Leads live in db/leads.json and are read and written by src/leadStore.ts.
+// Accounts, sessions and bot state live in db/state.json via src/stateStore.ts.
+// Conversations live in db/conversations.json via src/inbox.ts. All of them are
+// plain JSON files written atomically (tmp file + rename), persisted on the Fly
+// volume mounted at /app/db.
+//
+// This file exists only because the `prisma` CLI is a devDependency, kept for
+// the `prisma skills sync` postinstall that maintains the agent-skill folders
+// (.claude/, .cursor/, .agents/, .devin/). That command does not need a model.
+//
+// A `Lead` model previously declared here described a sqlite table that was
+// never created, queried or migrated — it contradicted the actual data layer
+// and invited someone to wire an ORM to a schema backing nothing.
+//
+// If you ever do move to a real database:
+//   1. Model the CURRENT shapes, not this file — see the types in
+//      src/leadStore.ts, src/accountStore.ts, src/inbox.ts and
+//      src/contentStore.ts.
+//   2. Move @prisma/client into `dependencies`, NOT devDependencies. The
+//      Dockerfile's final stage runs `npm install --omit=dev`, so a runtime
+//      client left in devDependencies breaks production but passes locally.
+//   3. Set DATABASE_URL as a Fly secret before deploying.
+// ---------------------------------------------------------------------------
+
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
@@ -5,14 +32,4 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
-}
-
-model Lead {
-  id          Int      @id @default(autoincrement())
-  telegramId  String   @unique   // Telegram user ID
-  name        String?  // Optional name
-  stage       String   @default("new") // e.g., new, contacted, qualified, closed
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  // Add any additional fields you need for analytics
 }

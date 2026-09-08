@@ -114,8 +114,23 @@ app.use((_req, res, next) => {
 const RATE_MAX = Number(process.env.RATE_LIMIT || 30); // requests per minute per IP
 const RATE_WINDOW_MS = 60000;
 const rateBuckets = new Map<string, { count: number; resetAt: number }>();
+
+// Buckets expire logically but were never deleted, so the map grew by one entry
+// per unique IP for the life of the process. Sweep expired keys at most once per
+// window — O(size) but only every 60s, and it keeps the map proportional to
+// active clients rather than to every client ever seen.
+let lastSweep = 0;
+function sweepRateBuckets(now: number): void {
+  if (now - lastSweep < RATE_WINDOW_MS) return;
+  lastSweep = now;
+  for (const [k, v] of rateBuckets) {
+    if (now > v.resetAt) rateBuckets.delete(k);
+  }
+}
+
 function rateLimit(key: string): boolean {
   const now = Date.now();
+  sweepRateBuckets(now);
   const b = rateBuckets.get(key);
   if (!b || now > b.resetAt) {
     rateBuckets.set(key, { count: 1, resetAt: now + RATE_WINDOW_MS });

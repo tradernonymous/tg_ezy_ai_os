@@ -220,9 +220,17 @@ __marimo__/
 
 # Runtime backups / local data
 db/*.bak
+# Runtime stores holding real account data. The Fly volume mounts over
+# /app/db, so these have no role in a deployed image.
+# db/conversations.json stays tracked: it is generated demo seed data.
+db/leads.json
+db/state.json
 
 # Stray runtime data if the app is ever launched without DATA_DIR/db
 /leads.json
 /state.json
 /conversations.json
 /state.json.bak
+
+# Playwright MCP scratch output (snapshots, console logs, screenshots)
+.playwright-mcp/
