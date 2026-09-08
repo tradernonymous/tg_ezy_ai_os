@@ -384,6 +384,39 @@
   .ask-input button:disabled { opacity: .5; cursor: wait; transform: none; }
   .ask-note { text-align: center; font-size: 12px; color: var(--text-3); margin-top: 18px; }
 
+  /* Ask AI: standalone section is mobile/tablet only; desktop uses the modal from the arsenal card */
+  @media (min-width: 1081px) { #askai { display: none; } }
+
+  .tool-chat { cursor: pointer; }
+  .tool-chat .try { position: absolute; top: 16px; right: 16px; font-size: 10px; font-weight: 800; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--green); border: 1px solid rgba(11,217,126,.5); background: rgba(11,217,126,.08);
+    padding: 4px 9px; border-radius: 999px; animation: pulse 2s infinite; }
+  .tool-chat:hover { border-color: var(--green); }
+  .tool-chat .ic svg { color: var(--green); }
+
+  /* Ask AI chat modal (desktop) */
+  .ai-backdrop { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 20px;
+    background: rgba(3,2,10,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .ai-backdrop[hidden] { display: none; }
+  .ai-panel { width: min(560px, 100%); max-height: min(680px, 88dvh); display: flex; flex-direction: column;
+    border-radius: var(--r-lg); border: 1px solid var(--border-strong);
+    background: linear-gradient(160deg, rgba(22,15,52,.97), rgba(8,5,24,.98));
+    box-shadow: 0 40px 120px rgba(0,0,0,.6), 0 0 70px rgba(139,92,246,.3); overflow: hidden;
+    animation: aiIn .26s cubic-bezier(.22,1,.36,1); }
+  @keyframes aiIn { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
+  .ai-head { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+  .ai-head .ai-title { display: flex; align-items: center; gap: 11px; }
+  .ai-head b { font-size: 14px; display: block; }
+  .ai-head small { display: block; font-size: 11px; color: var(--text-2); margin-top: 1px; }
+  .ai-close { margin-left: auto; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-2); cursor: pointer; font-size: 13px; }
+  .ai-close:hover { color: var(--text); border-color: var(--cyan); }
+  .brain-pills { display: flex; gap: 8px; padding: 12px 18px 0; flex-wrap: wrap; }
+  .brain-pills button { font-size: 12px; font-weight: 650; color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border); padding: 7px 14px; border-radius: 999px; cursor: pointer; transition: var(--tr-smooth); }
+  .brain-pills button:hover { color: var(--text); border-color: var(--cyan); }
+  .brain-pills button.on { color: #0a0518; background: linear-gradient(100deg, var(--cyan), var(--purple)); border-color: transparent; box-shadow: 0 4px 16px rgba(34,211,238,.35); }
+  #aiLog { min-height: 240px; }
+  #aiChips { padding: 2px 18px 11px; }
+
   /* ---------- responsive ---------- */
   @media (max-width: 1080px) {
     .tools { grid-template-columns: repeat(3, 1fr); }
@@ -393,6 +426,7 @@
     .plan.pop:hover { transform: translateY(-4px) scale(1.02); }
     .ask-grid { grid-template-columns: 1fr; max-width: 600px; margin: 0 auto; }
     #route, .route-node { display: none; }
+    .ai-panel { max-height: 92dvh; }
     .flow { grid-template-columns: repeat(2, 1fr); gap: 20px 14px; }
     .conn { display: none; }
     .stats { grid-template-columns: repeat(2, 1fr); }
@@ -650,6 +684,29 @@
   </div>
 </footer>
 
+<div id="aiModal" class="ai-backdrop" aria-hidden="true" hidden>
+  <div class="ai-panel" role="dialog" aria-modal="true" aria-label="Ask AI">
+    <div class="ai-head">
+      <div class="ai-title">
+        <span class="ask-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/></svg></span>
+        <div><b>Ask AI</b><small>Features, tools, plans — answer me anything</small></div>
+      </div>
+      <button class="ai-close" id="aiClose" aria-label="Close">✕</button>
+    </div>
+    <div class="brain-pills" id="brainPills">
+      <button type="button" data-brain="growth" class="on">Growth AI</button>
+      <button type="button" data-brain="content">Content AI</button>
+      <button type="button" data-brain="funnel">Funnel AI</button>
+    </div>
+    <div class="ask-log" id="aiLog"></div>
+    <div class="ask-chips" id="aiChips"></div>
+    <div class="ask-input">
+      <input id="aiInput" maxlength="2000" placeholder="Which plan should I pick?" aria-label="Message Ask AI">
+      <button id="aiSend" type="button" aria-label="Send">↑</button>
+    </div>
+  </div>
+</div>
+
 <div id="floatCta">
   <span>Jump in — free, no card</span><span class="arrow">→</span><span class="x" id="floatClose">✕</span>
 </div>
@@ -703,10 +760,15 @@ const TOOLS = [
 ];
 const grid = document.getElementById('toolsGrid');
 if (grid) TOOLS.forEach((t, i) => {
+  const isChat = t[0] === 'chat';
   const c = document.createElement('div');
-  c.className = 'tool reveal';
+  c.className = 'tool reveal' + (isChat ? ' tool-chat' : '');
   c.dataset.d = String(i % 4);
-  c.innerHTML = `<div class="ic">${svg(t[0])}</div><h4>${t[1]}</h4><p>${t[2]}</p>`;
+  if (isChat) c.dataset.chat = '1';
+  c.setAttribute('role', isChat ? 'button' : '');
+  c.setAttribute('tabindex', isChat ? '0' : '');
+  c.innerHTML = (isChat ? '<span class="try">Try It Free →</span>' : '') +
+    `<div class="ic">${svg(t[0])}</div><h4>${t[1]}</h4><p>${t[2]}</p>`;
   grid.appendChild(c);
 });
 
@@ -816,15 +878,15 @@ if (mock && !reduced && window.matchMedia('(pointer: fine)').matches) {
   stage.addEventListener('pointerleave', () => { mock.style.transform = ''; });
 }
 
-// ---------- Ask AI live cards ----------
+// ---------- Ask AI live cards (mobile/tablet section) ----------
 const ASK = [
-  { ic: 'growth', name: 'Growth AI', sub: 'Campaign ideas that convert',
+  { pk: 'growth', ic: 'growth', name: 'Growth AI', sub: 'Campaign ideas that convert',
     seed: 'Hey! Ask me for hooks, ad angles and campaign ideas — I run on the same model as your dashboard.',
     prompts: ['5 hooks for a launch', 'Fix my ad copy', 'Cold DM opener'] },
-  { ic: 'studio', name: 'Content AI', sub: 'Captions, drafts, swipe files',
+  { pk: 'content', ic: 'studio', name: 'Content AI', sub: 'Captions, drafts, swipe files',
     seed: 'Give me a brief — captions, SEO meta, swipe file — whatever you need shipped.',
     prompts: ['Write a launch caption', '3 SEO titles', 'Intro for a client'] },
-  { ic: 'target', name: 'Funnel AI', sub: 'Pings your pipeline mood',
+  { pk: 'funnel', ic: 'target', name: 'Funnel AI', sub: 'Pings your pipeline mood',
     seed: 'Draft follow-ups, audit your funnel, plan next steps from here.',
     prompts: ['Draft a follow-up', 'Audit my funnel', 'What do I ask next?'] }
 ];
@@ -862,7 +924,7 @@ if (askGrid) {
       try {
         const r = await fetch('/api/chat', {
           method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ message: text }), signal: ctrl.signal
+          body: JSON.stringify({ message: text, persona: a.pk }), signal: ctrl.signal
         });
         const j = await r.json().catch(() => ({}));
         typer.remove();
@@ -879,6 +941,115 @@ if (askGrid) {
     btn.addEventListener('click', () => send(input.value));
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(input.value); });
     card.querySelectorAll('.ask-chips button').forEach((c) => c.addEventListener('click', () => send(c.textContent)));
+  });
+}
+
+// ---------- Ask AI modal (desktop, from arsenal or nav) ----------
+const BRAIN_LIST = {
+  growth: { seed: 'Hi 👋 I\u2019m Growth AI. Ask me for campaign angles, hooks and ideas — or questions about EzyViral OS.',
+    chips: ['5 hooks for a launch', 'Which plan should I pick?', 'What is included at $29?'] },
+  content: { seed: 'Hey! I\u2019m Content AI — captions, meta and swipe files on tap. Ask away.',
+    chips: ['Write a launch caption', 'How do I start free?', 'What tools come with Hobby?'] },
+  funnel: { seed: 'I\u2019m Funnel AI — funnel logic, follow-ups, next steps. What\u2019s your question?',
+    chips: ['Draft a follow-up', 'Compare Marketer vs Navigator', 'How does the Unified Inbox work?'] }
+};
+const aiModal = document.getElementById('aiModal');
+if (aiModal) {
+  const aiLog = document.getElementById('aiLog');
+  const aiInput = document.getElementById('aiInput');
+  const aiChips = document.getElementById('aiChips');
+  const aiPills = document.getElementById('brainPills');
+  const aiSend = document.getElementById('aiSend');
+  const aiClose = document.getElementById('aiClose');
+  let brain = 'growth';
+  let mBusy = false; let mCtrl = null;
+  const pushM = (text, who) => {
+    const d = document.createElement('div');
+    d.className = 'msg ' + who;
+    d.textContent = text;
+    aiLog.appendChild(d); aiLog.scrollTop = aiLog.scrollHeight;
+    return d;
+  };
+  const setBrain = (key) => {
+    brain = key;
+    aiPills.querySelectorAll('[data-brain]').forEach(b => b.classList.toggle('on', b.dataset.brain === key));
+    aiLog.innerHTML = '';
+    pushM(BRAIN_LIST[key].seed, 'ai');
+    aiChips.innerHTML = '';
+    BRAIN_LIST[key].chips.forEach(txt => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = txt;
+      b.addEventListener('click', () => sendM(txt));
+      aiChips.appendChild(b);
+    });
+    aiInput.placeholder = 'Ask ' + key.charAt(0).toUpperCase() + key.slice(1) + ' AI…';
+  };
+  const sendM = async (raw) => {
+    const text = (raw || '').trim();
+    if (mBusy || !text) return;
+    pushM(text, 'me'); aiInput.value = '';
+    if (mCtrl) mCtrl.abort(); mCtrl = new AbortController();
+    const typer = document.createElement('div');
+    typer.className = 'msg ai'; typer.innerHTML = '<span class="tdots"><i></i><i></i><i></i></span>';
+    aiLog.appendChild(typer); aiLog.scrollTop = aiLog.scrollHeight;
+    mBusy = true; aiSend.disabled = true;
+    try {
+      const r = await fetch('/api/chat', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ message: text, persona: brain }), signal: mCtrl.signal
+      });
+      const j = await r.json().catch(() => ({}));
+      typer.remove();
+      if (!r.ok) {
+        pushM(r.status === 429 ? 'Nice pace! The free preview caps calls for a minute — the dashboard unlocks the full engine.' : 'The model hiccuped. Free previews are rate-limited — your paid plan unlocks the full engine.', 'ai');
+        return;
+      }
+      pushM(j.reply || 'No response from AI.', 'ai');
+    } catch (e) {
+      typer.remove();
+      if (e && e.name !== 'AbortError') pushM('Network blip — try again in a second.', 'ai');
+    } finally { mBusy = false; aiSend.disabled = false; }
+  };
+  const openAI = () => {
+    aiModal.hidden = false;
+    aiModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    aiInput.focus();
+  };
+  const closeAI = () => {
+    aiModal.hidden = true;
+    aiModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    if (mCtrl) mCtrl.abort();
+  };
+  window.evosOpenAI = openAI;
+  aiPills.querySelectorAll('[data-brain]').forEach(b => b.addEventListener('click', () => setBrain(b.dataset.brain)));
+  aiPills.querySelector('[data-brain="growth"]') && aiPills.querySelector('[data-brain="growth"]').classList.add('on');
+  aiSend.addEventListener('click', () => sendM(aiInput.value));
+  aiInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendM(aiInput.value); });
+  aiClose.addEventListener('click', closeAI);
+  aiModal.addEventListener('click', (e) => { if (e.target === aiModal) closeAI(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !aiModal.hidden) closeAI(); });
+  if (aiLog.children.length === 0) setBrain('growth');
+}
+
+// ---------- Ask AI entry points: arsenal card + nav link ----------
+if (grid) {
+  grid.addEventListener('click', (e) => {
+    const card = e.target.closest('[data-chat]');
+    if (!card) return;
+    if (window.matchMedia('(max-width: 1080px)').matches) {
+      const sec = document.getElementById('askai');
+      if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+    } else if (typeof window.evosOpenAI === 'function') {
+      window.evosOpenAI();
+    }
+  });
+}
+const askNav = document.querySelector('a[href="#askai"]');
+if (askNav) {
+  askNav.addEventListener('click', (e) => {
+    if (window.matchMedia('(min-width: 1081px)').matches && typeof window.evosOpenAI === 'function') { e.preventDefault(); window.evosOpenAI(); }
   });
 }
 

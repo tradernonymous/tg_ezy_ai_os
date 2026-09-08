@@ -381,15 +381,54 @@ app.delete("/api/leads/:id", requireAuth, async (req, res) => {
   }
 });
 
+// ---------- AI chat knowledge base (product browsing) ----------
+const PRODUCT_BRIEF = `EzyViral OS is a marketing command center for solo marketers and small teams.
+Core workflow: Capture leads (Telegram, manual entries) -> Qualify (pipeline stages with value) -> Create (AI content) -> Close (reply everywhere).
+Sign-in: Google, Telegram, or Magic Key by email. Free to start, no card. The app lives at /dashboard.
+
+MARKETING TOOLS (one account):
+- Plan: change tiers instantly, no sales walls
+- Persona: tone/audience/style presets for every piece
+- SEO Meta: CTR-tuned titles, descriptions, slugs
+- Content Review: OSP editing codes (scope, flow, style, wording, grammar, accuracy)
+- Growth Prompts: paid ads, SEO, email, CRO prompts that convert
+- Value Map: OSP-style product positioning maps
+- Workflow: stage-change automations that ping the owner
+- Swipe Files: scroll-stopping promo templates
+- Content Studio: long-form content command post
+- Campaigns: launch and track campaigns
+- Keywords: search angles grouped by intent
+- CSV Exports: take the pipeline anywhere
+- Unified Inbox: every channel in one window (Telegram, Email, WhatsApp, Instagram, TikTok, Facebook)
+- Ask AI: chat about leads and funnel, ask anything
+
+PLANS (per month):
+- Free $0 - Personal CRM: Add leads, Pipeline board, Conversation inbox preview
+- Hobby $9 - Start creating with AI: Plan, Persona, SEO Meta; more AI generations and chat priority
+- Marketer $29 - For active marketers: Content Review, Growth Prompts, Swipe Files; the popular pick for most users
+- Navigator $99 - Run the whole funnel: Value Map, Workflow, Content Studio, Campaigns, Keywords, Lead Magnets, CSV exports
+- Thinker $299 - Complete command center: everything in Navigator plus Unified Inbox (all channels)
+
+Note: standalone inbox consolidators typically run $75-99 per user; EzyViral OS bundles the Unified Inbox into the plan (a preview is included free).`;
+
+const CHAT_PERSONAS: Record<string, string> = {
+  default: `You are the EzyViral OS website assistant. Answer visitors using the product facts below. Keep answers short, friendly and specific (tool names, plan names, prices). Never invent prices or plans. If it is not covered by the facts, point them to the /pricing page.`,
+  growth: `You are Growth AI, a growth-marketing strategist inside EzyViral OS. First answer any product question from the facts below; otherwise give sharp actionable growth ideas (hooks, campaigns, angles). Keep replies brief.`,
+  content: `You are Content AI, a copywriting specialist inside EzyViral OS. First answer any product question from the facts below; otherwise draft tight copy (captions, meta, swipe lines). Keep replies brief.`,
+  funnel: `You are Funnel AI inside EzyViral OS. First answer any product question from the facts below; otherwise help with funnel logic, follow-up drafts and next steps. Keep replies brief.`,
+};
+
 // ---------- Chat (AI) — rate-limited + validated ----------
 app.post("/api/chat", async (req, res) => {
   if (!applyRateLimit(req, res)) return;
   try {
-    const { message } = req.body || {};
+    const { message, persona } = req.body || {};
     if (!message || typeof message !== "string") return res.status(400).json({ error: "Message required" });
     const trimmed = message.trim().slice(0, 2000);
     if (!trimmed) return res.status(400).json({ error: "Message required" });
-    const replyText = await generateResponse(trimmed);
+    const personaKey = typeof persona === "string" && CHAT_PERSONAS[persona.toLowerCase()] ? persona.toLowerCase() : "default";
+    const prompt = `${CHAT_PERSONAS[personaKey]}\n\nPRODUCT FACTS:\n${PRODUCT_BRIEF}\n\nVisitor question: ${trimmed}`;
+    const replyText = await generateResponse(prompt);
     res.json({ reply: replyText || "No response from AI." });
   } catch (err: any) {
     console.error(err);
