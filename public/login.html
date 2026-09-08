@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in — EzyViral OS</title>
+<meta name="robots" content="noindex">
+<style>
+  :root {
+    --bg: #0b0e17; --surface: #10141f; --surface-2: #151a28;
+    --border: #232a3d; --border-strong: #364059;
+    --text: #eef1f8; --text-2: #aab3c8; --text-3: #64708c;
+    --accent: #5b7cff; --accent-soft: rgba(91,124,255,.12);
+    --violet: #a78bfa; --green: #3dd68c; --danger: #f27e7e;
+    --r-lg: 16px; --r: 10px;
+    --tr: 180ms ease; --tr-smooth: 260ms cubic-bezier(.22,1,.36,1);
+    font-synthesis: none;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; }
+  body { min-height: 100vh; display: grid; place-items: center; padding: 32px 16px; position: relative; overflow-x: hidden; }
+  #aurora { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+  #aurora::before, #aurora::after { content: ''; position: absolute; width: 60vmax; height: 60vmax; border-radius: 50%; filter: blur(90px); opacity: .06; }
+  #aurora::before { background: var(--accent); top: -20vmax; left: -10vmax; animation: drift 26s ease-in-out infinite alternate; }
+  #aurora::after { background: var(--violet); bottom: -24vmax; right: -14vmax; animation: drift 34s ease-in-out infinite alternate-reverse; }
+  @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(8vmax,6vmax) scale(1.2); } }
+  .card { width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 28px 26px; position: relative; z-index: 1; box-shadow: 0 24px 70px rgba(0,0,0,.45); animation: rise 420ms cubic-bezier(.22,1,.36,1); }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 800; letter-spacing: .3px; margin-bottom: 4px; }
+  .brand .logo { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, var(--accent), var(--violet)); display: grid; place-items: center; font-size: 14px; }
+  .brand .sub { font-size: 11px; color: var(--text-3); font-weight: 500; }
+  h1 { font-size: 20px; margin: 18px 0 4px; font-weight: 700; }
+  .lead { font-size: 13px; color: var(--text-2); margin-bottom: 22px; line-height: 1.5; }
+  .providers { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+  .btn { appearance: none; border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text); height: 44px; border-radius: var(--r); font-size: 13.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 9px; transition: border-color var(--tr), background var(--tr), transform var(--tr); position: relative; overflow: hidden; }
+  .btn:hover { background: #1a2132; border-color: var(--accent); }
+  .btn:active { transform: scale(.985); }
+  .btn.primary { background: var(--accent-soft); border-color: var(--accent); color: #cfd9ff; }
+  .btn:disabled { opacity: .55; cursor: not-allowed; }
+  .divider { display: flex; align-items: center; gap: 12px; color: var(--text-3); font-size: 11px; text-transform: uppercase; letter-spacing: .8px; margin: 16px 0; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .mgrid { display: flex; flex-direction: column; gap: 10px; }
+  input { width: 100%; height: 42px; border-radius: var(--r); border: 1px solid var(--border-strong); background: #0d1120; color: var(--text); font-size: 13.5px; padding: 0 12px; outline: none; transition: border-color var(--tr), box-shadow var(--tr); }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .code-row { display: flex; gap: 8px; }
+  .code-row input { flex: 1; letter-spacing: 4px; font-weight: 700; text-align: center; }
+  .step-hint { font-size: 11.5px; color: var(--text-3); margin-bottom: 8px; line-height: 1.5; }
+  .step-hint b { color: var(--text-2); }
+  .code-preview { background: #0d1120; border: 1px dashed var(--border-strong); border-radius: var(--r); padding: 10px 12px; font-size: 22px; font-weight: 800; text-align: center; letter-spacing: 6px; color: var(--green); margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+  .err { color: var(--danger); font-size: 12px; min-height: 16px; margin: 4px 0 0; display: none; }
+  .err.show { display: block; }
+  .foot { margin-top: 18px; font-size: 11.5px; color: var(--text-3); text-align: center; line-height: 1.6; }
+  .foot a { color: var(--accent); text-decoration: none; }
+  .foot a:hover { text-decoration: underline; }
+  .hidden { display: none !important; }
+  .gsi { height: 44px; }
+  .gsi > div:not(#gsiDisable) { width: 100%; height: 44px; display: flex; }
+  .gsi iframe { border-radius: var(--r) !important; }
+  .spinner { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,.25); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; } }
+</style>
+</head>
+<body>
+<div id="aurora"></div>
+<div class="card">
+  <div class="brand">
+    <div class="logo">Ez</div>
+    <div>
+      <div style="font-size:15px;">EzyViral OS</div>
+      <div class="sub">Your marketing command center</div>
+    </div>
+  </div>
+  <h1>Welcome back</h1>
+  <p class="lead">Sign in to your workspace. Your leads, pipeline and tiers live here — per account.</p>
+
+  <div class="providers" id="providers"></div>
+
+  <div class="divider">or magic key</div>
+
+  <div id="magicPanel">
+    <form id="magicForm">
+      <input type="email" id="magicEmail" placeholder="you@email.com" autocomplete="email" required>
+      <div class="err" id="magicErr"></div>
+      <button class="btn primary" id="magicBtn" type="submit" style="margin-top:10px;width:100%;">Email me a code</button>
+    </form>
+    <form id="verifyForm" class="hidden" style="margin-top:10px;">
+      <div id="codePreview" class="code-preview hidden"></div>
+      <div class="step-hint" id="verifyHint">Enter the 6-digit code.</div>
+      <div class="code-row">
+        <input id="magicCode" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+        <button class="btn primary" id="verifyBtn" type="submit" style="width:88px;">Go</button>
+      </div>
+      <div class="err" id="verifyErr"></div>
+    </form>
+  </div>
+
+  <p class="foot">Protected end-to-end · sessions last 7 days<br><a href="/home">Learn about EzyViral OS</a></p>
+</div>
+
+<script>
+let cfg = null;
+const isDevPreview = () => !!cfg?.magicDevPreview;
+
+async function boot() {
+  try {
+    const r = await fetch('/api/auth/config');
+    cfg = await r.json();
+  } catch (e) { cfg = { providers: [], googleClientId: '', telegramBot: '', magicDevPreview: false }; }
+  renderProviders();
+  const g = document.getElementById('magicEmail');
+  if (isDevPreview()) g.autocomplete = 'username'; // dev preview: any email works
+}
+
+function providerBtn(emoji, label, onClick) {
+  const b = document.createElement('button');
+  b.className = 'btn';
+  b.innerHTML = `<span style="font-size:16px;">${emoji}</span> ${label}`;
+  b.addEventListener('click', onClick);
+  document.getElementById('providers').appendChild(b);
+}
+
+function renderProviders() {
+  const host = document.getElementById('providers');
+  host.innerHTML = '';
+  if (cfg.googleClientId) {
+    host.innerHTML += `<div class="gsi" id="gsiWrap"></div>`;
+    loadGSI();
+  } else if (cfg.telegramBot) {
+    // telegram widget below
+  }
+  if (cfg.telegramBot) {
+    const wrap = document.createElement('div');
+    wrap.id = 'tgWrap';
+    wrap.style.cssText = 'display:flex;justify-content:center;';
+    host.insertBefore(wrap, host.firstChild);
+    loadTelegramWidget();
+    providerBtn('✈️', 'Continue with Telegram', () => alert('Telegram widget failed to load — retry on reload.'));
+  }
+  if (cfg.googleClientId === '' && cfg.telegramBot === '') {
+    host.innerHTML = `<p style="font-size:12px;color:var(--text-3);line-height:1.6;">Sign-in providers are being connected — for now, use the <b>Magic Key</b> below${isDevPreview() ? ' (shows your code instantly)' : ''}.</p>`;
+  }
+}
+
+function post(path, body) {
+  return fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
+}
+function afterLogin(d) {
+  if (d && d.ok) { location.href = '/dashboard'; return; }
+  showErr('googleErr' in d ? 'googleErr' : 'loginErr');
+}
+function showErr(id) {
+  const el = document.getElementById('magicErr');
+  if (el) { el.textContent = 'Sign-in failed. Please try again.'; el.classList.add('show'); }
+}
+
+function onGoogleCredential(credential) {
+  showBusy(true);
+  post('/api/auth/google', { credential }).then(d => {
+    showBusy(false);
+    if (d && d.ok) location.href = '/dashboard';
+    else { const el = document.getElementById('magicErr'); el.textContent = d?.error || 'Google sign-in failed'; el.classList.add('show'); }
+  }).catch(() => { showBusy(false); });
+}
+
+function showBusy(on) {
+  const btn = document.getElementById('magicBtn');
+  if (btn && !btn.disabled) { btn.disabled = on; if (on) btn.innerHTML = '<span class="spinner"></span>'; }
+}
+
+function loadGSI() {
+  const s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.async = true;
+  s.onload = () => {
+    try {
+      globalThis.google?.accounts?.id.initialize({
+        client_id: cfg.googleClientId,
+        callback: (resp) => onGoogleCredential(resp.credential),
+      });
+      globalThis.google?.accounts?.id.renderButton(document.getElementById('gsiWrap'), { theme: 'filled_black', size: 'large', width: 366, shape: 'pill' });
+    } catch (e) { /* fall through to magic */ }
+  };
+  document.head.appendChild(s);
+}
+
+function loadTelegramWidget() {
+  const s = document.createElement('script');
+  s.src = 'https://telegram.org/js/telegram-widget.js?22';
+  s.setAttribute('data-telegram-login', cfg.telegramBot);
+  s.setAttribute('data-size', 'large');
+  s.setAttribute('data-radius', '10');
+  s.setAttribute('data-request-access', 'write');
+  s.setAttribute('data-onauth', 'onTelegramAuth(user)');
+  document.getElementById('tgWrap').appendChild(s);
+}
+function onTelegramAuth(user) {
+  post('/api/auth/telegram', { data: user }).then(d => {
+    if (d && d.ok) location.href = '/dashboard';
+    else { const el = document.getElementById('magicErr'); el.textContent = d?.error || 'Telegram sign-in failed'; el.classList.add('show'); }
+  });
+}
+
+// Magic Key flow
+document.getElementById('magicForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const emailInput = document.getElementById('magicEmail');
+  const email = emailInput.value.trim().toLowerCase();
+  const errEl = document.getElementById('magicErr');
+  errEl.classList.remove('show');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Enter a valid email address.'; errEl.classList.add('show'); return; }
+  const btn = document.getElementById('magicBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  const d = await post('/api/auth/magic/request', { email });
+  btn.disabled = false; btn.innerHTML = 'Email me a code';
+  if (!d || !d.ok) {
+    errEl.textContent = d?.error || 'Could not send code.'; errEl.classList.add('show'); return;
+  }
+  document.getElementById('magicForm').classList.add('hidden');
+  document.getElementById('verifyForm').classList.remove('hidden');
+  if (d.delivered === 'preview' && d.code) {
+    document.getElementById('codePreview').classList.remove('hidden');
+    document.getElementById('codePreview').textContent = d.code;
+    document.getElementById('verifyHint').innerHTML = 'Dev preview: your one-time code is shown above. Type it below to continue.';
+  } else {
+    document.getElementById('verifyHint').textContent = `A code was dispatched to ${email}. Delivery is pending config — use dev preview (MAGIC_DEV_PREVIEW=true) to see it instantly.`;
+  }
+  document.getElementById('magicCode').focus();
+});
+
+document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('magicEmail').value.trim().toLowerCase();
+  const code = document.getElementById('magicCode').value.trim();
+  const errEl = document.getElementById('verifyErr');
+  errEl.classList.remove('show');
+  if (code.length !== 6) { errEl.textContent = 'Enter the 6-digit code.'; errEl.classList.add('show'); return; }
+  const btn = document.getElementById('verifyBtn');
+  btn.disabled = true; btn.textContent = '…';
+  const d = await post('/api/auth/magic/verify', { email, code });
+  btn.disabled = false; btn.textContent = 'Go';
+  if (d && d.ok) location.href = '/dashboard';
+  else { errEl.textContent = d?.error || 'Invalid or expired code.'; errEl.classList.add('show'); }
+});
+
+boot();
+</script>
+</body>
+</html>

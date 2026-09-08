@@ -11,6 +11,7 @@ import {
   markRead,
   reply,
   unreadTotals,
+  adoptUnownedConvs,
 } from '../inbox';
 
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'tg-os-inbox-'));
@@ -67,4 +68,13 @@ test('inbox: reply appends agent message and updates lastAt', () => {
 
 test('inbox: getConversation returns undefined for unknown id', () => {
   assert.equal(getConversation('nope'), undefined);
+});
+
+test('inbox: adoptUnownedConvs claims unowned seeded conversations for the owner', () => {
+  seedIfEmpty();
+  const total = getConversations().length;
+  const adopted = adoptUnownedConvs('acc-1');
+  assert.ok(adopted >= 5, `expected >=5 adopted, got ${adopted}`);
+  assert.equal(getConversations('acc-1').length, total, 'owner sees all conversations after adoption');
+  assert.equal(unreadTotals('acc-1').total, unreadTotals().total);
 });

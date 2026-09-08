@@ -62,6 +62,8 @@
     /* motion */
     --tr-fast: 120ms ease;
     --tr: 180ms ease;
+    --tr-smooth: 260ms cubic-bezier(.22, 1, .36, 1);
+    --tr-spring: 400ms cubic-bezier(.34, 1.56, .64, 1);
 
     /* layout */
     --sidebar-w: 232px;
@@ -243,8 +245,8 @@
 
   /* ---------- View switching ---------- */
   .view { display: none; }
-  .view.active { display: block; animation: viewIn 160ms ease; }
-  @keyframes viewIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .view.active { display: block; animation: viewIn 320ms cubic-bezier(.22, 1, .36, 1); }
+  @keyframes viewIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
   /* ============================================================
      BUTTONS
@@ -258,7 +260,7 @@
     transition: background var(--tr-fast), border-color var(--tr-fast), color var(--tr-fast), opacity var(--tr-fast);
   }
   .btn:hover { background: var(--surface-3); border-color: var(--border-strong); }
-  .btn:active { transform: translateY(0.5px); }
+  .btn:active { transform: scale(0.97); }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn.primary { background: var(--accent); border-color: transparent; color: #fff; }
   .btn.primary:hover { background: var(--accent-hover); }
@@ -670,12 +672,22 @@
     background: var(--surface-3); border: 1px solid var(--border-strong);
     color: var(--text); border-radius: var(--r-lg); box-shadow: var(--shadow-2);
     padding: 10px 14px; font-size: 12.5px; min-width: 220px; max-width: 340px;
-    animation: toastIn 180ms ease;
+    position: relative; overflow: hidden;
+    animation: toastSpring 380ms cubic-bezier(.34, 1.56, .64, 1);
+  }
+  .toast::after {
+    content: ''; position: absolute; left: 0; bottom: 0; height: 2px; width: 100%;
+    background: var(--tp, var(--accent)); transform-origin: left;
+    animation: toastLife 3.6s linear forwards;
   }
   .toast.error { border-left: 3px solid var(--danger); }
   .toast.success { border-left: 3px solid var(--success); }
   .toast.info { border-left: 3px solid var(--accent); }
-  @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes toastSpring {
+    0% { opacity: 0; transform: translateY(14px) scale(0.96); }
+    100% { opacity: 1; transform: none; }
+  }
+  @keyframes toastLife { from { transform: scaleX(1); } to { transform: scaleX(0); } }
   .toast .t-close { margin-left: auto; background: transparent; border: 0; color: var(--text-3); cursor: pointer; font-size: 13px; padding: 0 2px; }
   .toast .t-close:hover { color: var(--text); }
 
@@ -704,6 +716,134 @@
     color: var(--text-3); font-size: 11.5px; flex-wrap: wrap; gap: 8px;
   }
   footer a { color: var(--accent); }
+
+  /* ============================================================
+     MOTION LAYER (energetic + sleek — transform/opacity only)
+     ============================================================ */
+  html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="off"] *::after {
+    animation: none !important; transition: none !important; scroll-behavior: auto !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  #aurora { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  #aurora::before, #aurora::after {
+    content: ''; position: absolute; width: 62vmax; height: 62vmax; border-radius: 50%;
+    filter: blur(90px); opacity: 0.05; will-change: transform;
+  }
+  #aurora::before { background: var(--accent); top: -22vmax; left: -12vmax; animation: auroraDrift 28s ease-in-out infinite alternate; }
+  #aurora::after { background: var(--violet); bottom: -26vmax; right: -16vmax; animation: auroraDrift 36s ease-in-out infinite alternate-reverse; }
+  @keyframes auroraDrift {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(9vmax, 7vmax) scale(1.18); }
+  }
+  .shell { position: relative; z-index: 1; }
+
+  #cursorGlow {
+    position: fixed; left: 0; top: 0; width: 360px; height: 360px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(91,124,255,0.10), rgba(167,139,250,0.045) 45%, transparent 70%);
+    pointer-events: none; z-index: 300; transform: translate(-50%, -50%);
+    opacity: 0; transition: opacity 500ms ease;
+  }
+  body.glowing #cursorGlow { opacity: 1; }
+
+  .nav-scroll { position: relative; }
+  .nav-scroll::after {
+    content: ''; position: absolute; top: 0; left: 0; width: 110px; height: 240px;
+    background: radial-gradient(110px 240px at center, rgba(91,124,255,0.14), transparent 70%);
+    transform: translate(calc(var(--mx, 0px) - 55px), calc(var(--my, 0px) - 120px));
+    opacity: 0; pointer-events: none; transition: opacity .25s ease, transform .35s ease-out;
+  }
+  .nav-scroll:hover::after { opacity: 1; }
+
+  .rise-in { animation: riseUp 380ms cubic-bezier(.22, 1, .36, 1) both; }
+  @keyframes riseUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  .btn, .icon-btn, .pill, .suggest-chip, .nav-item { position: relative; overflow: hidden; }
+  .btn:active, .icon-btn:active, .pill:active, .suggest-chip:active, .nav-item:active { transform: scale(0.97); }
+  .nav-item .icon { display: inline-block; transition: transform var(--tr-spring); }
+  .nav-item:hover .icon { transform: translateY(-1px) scale(1.18) rotate(-4deg); }
+
+  .ripple {
+    position: absolute; border-radius: 50%; pointer-events: none;
+    background: rgba(255,255,255,0.12);
+    transform: scale(0); animation: rippleKf 600ms ease-out forwards;
+  }
+  @keyframes rippleKf { to { transform: scale(1); opacity: 0; } }
+
+  .btn.sheen::after {
+    content: ''; position: absolute; top: 0; bottom: 0; width: 34%; left: -40%;
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,0.32), transparent);
+    transform: skewX(-20deg); animation: sheenKf 4.6s ease-in-out infinite;
+  }
+  @keyframes sheenKf {
+    0%, 58% { left: -40%; }
+    100% { left: 130%; }
+  }
+
+  .deal, .tool-card { transition: border-color var(--tr-fast), background var(--tr-fast), transform 140ms ease-out, box-shadow var(--tr-fast); }
+  .deal.tilted, .tool-card.tilted {
+    transform: perspective(620px) rotateX(var(--tx, 0deg)) rotateY(var(--ty, 0deg)) translateY(-2px);
+    border-color: var(--border-strong); box-shadow: var(--shadow-1);
+  }
+  .tool-card.locked { opacity: 0.62; filter: saturate(0.75); }
+
+  .confetti { position: fixed; z-index: 400; pointer-events: none; border-radius: 1px; opacity: 1;
+    animation: confettiFall 1.5s cubic-bezier(.22, 1, .36, 1) forwards; }
+  @keyframes confettiFall {
+    0% { opacity: 1; transform: translate(0, 0) rotate(0); }
+    100% { opacity: 0; transform: translate(var(--dx, 0), var(--dy, 130px)) rotate(var(--rot, 360deg)); }
+  }
+
+  .user-chip {
+    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+    display: grid; place-items: center;
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+    font-size: 11px; font-weight: 650; cursor: pointer;
+    transition: border-color var(--tr-fast), background var(--tr-fast);
+  }
+  .user-chip:hover { background: var(--surface-3); border-color: var(--border-strong); color: var(--accent); }
+
+  /* upgrade plans modal */
+  .plans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .plan-tile {
+    border: 1px solid var(--border); border-radius: var(--r-lg); padding: 12px;
+    background: var(--surface-2); display: flex; flex-direction: column; gap: 8px;
+    transition: border-color var(--tr-fast), transform var(--tr-fast);
+  }
+  .plan-tile.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: var(--accent-soft); }
+  .pt-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+  .pt-name { font-size: 13px; font-weight: 600; }
+  .pt-price { font-size: 12px; color: var(--accent); font-weight: 700; }
+  .pt-desc { font-size: 11px; color: var(--text-3); line-height: 1.45; flex: 1; }
+  @media (max-width: 760px) {
+    .plans-grid { grid-template-columns: 1fr; }
+  }
+
+  /* unified inbox channel setup */
+  .channel-setup {
+    border: 1px dashed var(--border-strong); border-radius: var(--r-lg);
+    padding: 12px; margin-bottom: 14px; background: rgba(16,20,31,.55);
+  }
+  .channel-setup .cs-title { font-size: 12px; font-weight: 650; color: var(--text-2); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .channel-setup .cs-title .plug { font-size: 14px; }
+  .cs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+  .cs-chip {
+    border: 1px solid var(--border-strong); border-radius: var(--r); background: var(--surface-2);
+    padding: 8px 10px; font-size: 12px; display: flex; align-items: center; gap: 8px;
+    cursor: pointer; transition: border-color var(--tr-fast), background var(--tr-fast), transform var(--tr-fast);
+  }
+  .cs-chip:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .cs-chip:active { transform: scale(.98); }
+  .cs-chip .cs-em { font-size: 15px; }
+  .cs-chip .cs-st { margin-left: auto; font-size: 10px; font-weight: 700; color: var(--text-3); }
+  .cs-chip[data-state="sim"] .cs-st { color: var(--success); }
 
   /* ============================================================
      RESPONSIVE
@@ -746,6 +886,7 @@
 </style>
 </head>
 <body>
+<div id="aurora"></div>
 <div class="shell">
 
   <!-- ============ SIDEBAR ============ -->
@@ -805,13 +946,15 @@
       </div>
       <div class="topbar-spacer"></div>
       <span class="last-refresh"><span class="dot" id="healthDot"></span> <span id="lastRefresh">—</span></span>
+      <button class="icon-btn" id="motionToggle" title="Toggle animations" aria-label="Toggle animations">✦</button>
       <button class="search-trigger" id="searchTrigger" aria-label="Search (Ctrl K)">
         <span>🔍</span><span class="st-label">Search anything…</span><span class="kbd">⌘K</span>
       </button>
       <button class="icon-btn" id="refreshBtn" title="Refresh (Ctrl+R)" aria-label="Refresh">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13.5 2.5v3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <button class="btn primary" onclick="openAddLead();">＋ Add lead</button>
+      <div class="user-chip" id="userChip" title="Account"></div>
+      <button class="btn primary sheen" onclick="openAddLead();">＋ Add lead</button>
     </div>
 
     <div class="content">
@@ -935,6 +1078,7 @@
             <div class="spacer"></div>
             <div id="channelPills" style="display:flex; gap:6px;"></div>
           </div>
+          <div class="channel-setup" id="channelSetup"></div>
           <div class="inbox-layout">
             <div class="list-col">
               <div class="conv-list" id="convList">
@@ -1071,6 +1215,18 @@
   </div>
 </div>
 
+<!-- ============ PLANS / UPGRADE ============ -->
+<div class="overlay" id="plansBackdrop" onclick="if(event.target===this) closePlans();">
+  <div class="modal">
+    <div class="modal-head"><h2>Upgrade your plan</h2><button class="icon-btn" style="width:26px;height:26px;" onclick="closePlans();" aria-label="Close">✕</button></div>
+    <div class="modal-body">
+      <div class="form-error" id="plansError"></div>
+      <div class="plans-grid" id="plansList"></div>
+      <p style="font-size:11px;color:var(--text-3);margin-top:12px;line-height:1.5;">Stripe &amp; USDT payments are being connected — we'll notify you when they go live. Telegram codes (<code>/redeem</code>) keep working when linked.</p>
+    </div>
+  </div>
+</div>
+
 <!-- ============ COMMAND PALETTE ============ -->
 <div class="overlay" id="paletteBackdrop" onclick="if(event.target===this) closePalette();">
   <div class="palette">
@@ -1108,9 +1264,27 @@ const CHANNEL_INFO = {
 
 let leads = [];
 let plan = 'free';
+let account = null;
 let aiCount = 0;
 let isFirstLoad = true;
 let view = 'overview';
+
+const TIERS = ['free', 'hobby', 'marketer', 'navigator', 'thinker'];
+const PLANS = [
+  { tier: 'free',      label: 'Free',      price: '$0/mo',  desc: 'Add leads + pipeline',            blurb: 'Your personal CRM' },
+  { tier: 'hobby',     label: 'Hobby',     price: '$9/mo',  desc: 'Plan · Persona · SEO Meta',        blurb: 'Start creating with AI' },
+  { tier: 'marketer',  label: 'Marketer',  price: '$29/mo', desc: 'Content Review · Growth · Swipe',  blurb: 'For active marketers' },
+  { tier: 'navigator', label: 'Navigator', price: '$99/mo', desc: 'All marketing tools + exports',    blurb: 'Run your whole funnel' },
+  { tier: 'thinker',   label: 'Thinker',   price: '$299/mo',desc: 'Everything + Unified Inbox',       blurb: 'Complete command center' },
+];
+function tierIndex(t) { const i = TIERS.indexOf(String(t || '').toLowerCase()); return i < 0 ? 0 : i; }
+function hasTier(min) { return tierIndex(plan) >= min; }
+function planFeaturesFor(p) {
+  const i = tierIndex(p);
+  if (i >= 4) return 'Everything unlocked — incl. Unified Inbox';
+  if (i >= 3) return 'All marketing tools + exports unlocked';
+  return PLANS[i].desc + ' unlocked — upgrade for more';
+}
 
 const AVATAR_CLASSES = ['', 'violet', 'green', 'amber', 'pink', 'cyan'];
 const VIEW_META = {
@@ -1162,6 +1336,7 @@ function timeAgo(iso) {
 function daysSince(iso) { return iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : 999; }
 async function api(path, opts) {
   const r = await fetch(path, opts);
+  if (r.status === 401) { location.href = '/login'; throw new Error('auth'); }
   return r.json();
 }
 function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
@@ -1170,6 +1345,11 @@ function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTi
    NAVIGATION
    ============================================================ */
 function switchView(v) {
+  if (v === 'inbox' && tierIndex(plan) < 4) {
+    toast('Unified Inbox unlocks at Thinker', 'info');
+    openPlans(4);
+    return;
+  }
   view = v;
   document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === v));
   document.querySelectorAll('.view').forEach(s => s.classList.toggle('active', s.id === 'view-' + v));
@@ -1199,6 +1379,7 @@ $('collapseBtn').addEventListener('click', () => {
 function toast(msg, type) {
   const el = document.createElement('div');
   el.className = 'toast ' + (type || 'info');
+  el.style.setProperty('--tp', type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--danger)' : 'var(--accent)');
   el.innerHTML = `<span>${escapeHtml(msg)}</span><button class="t-close" aria-label="Dismiss">✕</button>`;
   $('toasts').appendChild(el);
   const kill = () => { el.style.transition = 'opacity 160ms'; el.style.opacity = '0'; setTimeout(() => el.remove(), 170); };
@@ -1265,7 +1446,8 @@ async function loadDashboard(showSkeleton) {
     const stats = await api('/api/stats');
     const leadsData = await api('/api/leads');
     leads = leadsData.leads || [];
-    plan = (stats.plan || 'free').toUpperCase();
+    const statsPlan = String(stats.plan || 'free').toLowerCase();
+    if (tierIndex(statsPlan) > tierIndex(plan)) plan = statsPlan;
     aiCount = stats.aiCount || 0;
     renderMetrics(stats);
     renderDistribution(stats);
@@ -1274,10 +1456,9 @@ async function loadDashboard(showSkeleton) {
     renderPipelineBoard();
     renderLeadsTable();
     $('leadCountBadge').textContent = leads.length;
-    $('planChip').textContent = plan;
-    $('planFeatures').textContent = (plan === 'FREE' || plan === 'PRO-TRIAL')
-      ? 'Core tools unlocked — upgrade for the full toolkit'
-      : 'Everything unlocked — full pro toolkit';
+    $('planChip').textContent = PLANS[tierIndex(plan)].label.toUpperCase() + ' · ' + PLANS[tierIndex(plan)].price;
+    $('planFeatures').textContent = planFeaturesFor(plan);
+    if (tierIndex(plan) < 4) $('inboxBadge').style.display = 'none';
     $('healthDot').className = 'dot';
     $('lastRefresh').textContent = 'Updated ' + new Date().toLocaleTimeString();
     isFirstLoad = false;
@@ -1313,7 +1494,7 @@ function renderMetrics(stats) {
   $('metrics').innerHTML = `
     <div class="metric">
       <div class="label">Total leads</div>
-      <div class="value num">${total}</div>
+      <div class="value num">0</div>
       <div class="chips">
         <span class="chip new">${c('new')} new</span>
         <span class="chip contacted">${c('contacted')} contacted</span>
@@ -1323,19 +1504,25 @@ function renderMetrics(stats) {
     </div>
     <div class="metric">
       <div class="label">Pipeline value</div>
-      <div class="value num">${money(pipeV)}</div>
+      <div class="value num">0</div>
       <div class="sub">Open deals · awaiting close</div>
     </div>
     <div class="metric">
       <div class="label">Closed value</div>
-      <div class="value num">${money(closedV)}</div>
+      <div class="value num">0</div>
       <div class="sub">${money(Math.max(0, total ? closedV / total : 0))} avg / lead</div>
     </div>
     <div class="metric">
       <div class="label">Unread conversations</div>
-      <div class="value num">${inbox.total || 0}</div>
+      <div class="value num">0</div>
       <div class="sub">${Object.entries(inbox.byChannel || {}).map(([ch, n]) => `${CHANNEL_INFO[ch] ? CHANNEL_INFO[ch].emoji : ''} ${n} ${CHANNEL_INFO[ch] ? CHANNEL_INFO[ch].label : ''}`).join(' · ') || 'All caught up'}</div>
     </div>`;
+  requestAnimationFrame(() => {
+    const v = [...$('metrics').querySelectorAll('.metric .value')];
+    const list = [total, pipeV, closedV, inbox.total || 0];
+    const fmts = [x => String(x), x => money(x), x => money(x), x => String(x)];
+    v.forEach((el, k) => { el.textContent = '0'; countUp(el, list[k], fmts[k]); });
+  });
 }
 
 function renderDistribution(stats) {
@@ -1355,6 +1542,7 @@ function renderDistribution(stats) {
   requestAnimationFrame(() => {
     document.querySelectorAll('#distribution .d-fill').forEach(el => { el.style.width = el.dataset.w + '%'; });
   });
+  staggerRoot($('distribution'), '.dist-row');
 }
 
 function renderAtRisk() {
@@ -1375,6 +1563,7 @@ function renderAtRisk() {
       </div>
     </div>`;
   }).join('') : `<div class="empty-state"><div class="e-icon">✨</div><div class="e-title">All caught up</div><div class="e-desc">No leads are stalled in early stages.</div></div>`;
+  staggerRoot($('atRiskList'), '.risk-item');
 }
 async function bumpLead(id) {
   const l = leads.find(x => x.id === id);
@@ -1384,6 +1573,7 @@ async function bumpLead(id) {
   if (next === l.stage) return;
   await api('/api/leads/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stage: next }) });
   toast(`${l.name || 'Lead'} moved to ${STAGE_META[next].label}`, 'success');
+  if (next === 'closed') confetti();
   loadDashboard(false);
 }
 
@@ -1401,6 +1591,7 @@ function renderRecentTable() {
       <td class="muted">${timeAgo(l.updatedAt || l.createdAt)}</td>
     </tr>`;
   }).join('') : `<tr><td colspan="5" class="empty-cell">No leads yet — add your first from the top bar.</td></tr>`;
+  staggerRoot($('recentTable'), 'tr');
 }
 
 /* ============================================================
@@ -1482,6 +1673,7 @@ function renderLeadsTable() {
       </div></td>
     </tr>`;
   }).join('');
+  staggerRoot($('leadsTable'), 'tr');
 }
 
 function moveLeadStage(id, target) {
@@ -1494,7 +1686,7 @@ function moveLeadStage(id, target) {
   }
   if (next === l.stage || !next) return;
   api('/api/leads/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stage: next }) })
-    .then(() => { toast(`${l.name || 'Lead'} → ${STAGE_META[next].label}`, 'success'); loadDashboard(false); });
+    .then(() => { toast(`${l.name || 'Lead'} → ${STAGE_META[next].label}`, 'success'); loadDashboard(false); if (next === 'closed') confetti(); });
 }
 function toggleSelect(id) {
   if (selected.has(id)) selected.delete(id); else selected.add(id);
@@ -1604,6 +1796,7 @@ function renderPipelineBoard() {
       <div class="col-body">${cards}</div>
     </div>`;
   }).join('');
+  staggerRoot($('pipelineBoard'), '.col');
 }
 
 /* ============================================================
@@ -1782,6 +1975,7 @@ async function submitLeadModal(e) {
   closeLeadModal();
   toast(`${name} added as a lead`, 'success');
   loadDashboard(false);
+  confetti();
 }
 async function requestDelete(id) {
   const l = leads.find(x => x.id === id);
@@ -1885,7 +2079,9 @@ $('paletteList').addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); togglePalette(); }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r') { e.preventDefault(); loadDashboard(false); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r') { e.preventDefault(); loadDashboard(false);
+  if (target === 'closed') confetti();
+}
   if ((e.ctrlKey || e.metaKey) && e.key === '\\') { e.preventDefault(); $('sidebar').classList.toggle('collapsed'); }
   if (e.key === 'Escape') {
     if ($('paletteBackdrop').classList.contains('open')) closePalette();
@@ -1955,24 +2151,27 @@ async function sendChat(e) {
    TOOLS
    ============================================================ */
 const TOOLS = [
-  { id: 'plan',     emoji: '💳', name: 'Plan',        desc: 'Switch plan / view current tier', lock: false },
-  { id: 'persona',  emoji: '🎭', name: 'Persona',     desc: 'Tone, audience and style', lock: false },
-  { id: 'meta',     emoji: '🔍', name: 'SEO Meta',    desc: 'Titles & descriptions', lock: false },
-  { id: 'valuemap', emoji: '🗺', name: 'Value Map',   desc: 'OSP product positioning', lock: false },
-  { id: 'review',   emoji: '✎', name: 'Content Review', desc: 'OSP editing-codes review', lock: false },
-  { id: 'growth',   emoji: '↗', name: 'Growth Prompts', desc: 'Ads, SEO, email, CRO', lock: false },
-  { id: 'swipe',    emoji: '▤', name: 'Swipe Files',  desc: 'Hooks & headlines', lock: false },
-  { id: 'workflow', emoji: '⚙', name: 'Workflow',    desc: 'Automation triggers', lock: true },
-  { id: 'content',  emoji: '📝', name: 'Content Studio', desc: 'Posts, emails, captions', lock: true },
-  { id: 'campaign', emoji: '✉', name: 'Campaigns',   desc: 'Ideas + checklists', lock: true },
-  { id: 'keywords', emoji: '⌗', name: 'Keywords',    desc: 'Intent-based research', lock: true },
-  { id: 'leadmagnet', emoji: '🧲', name: 'Lead Magnets', desc: 'Conversion ideas', lock: true },
+  { id: 'plan',     emoji: '💳', name: 'Plan',        desc: 'Switch plan / view current tier', min: 0 },
+  { id: 'persona',  emoji: '🎭', name: 'Persona',     desc: 'Tone, audience and style', min: 1 },
+  { id: 'meta',     emoji: '🔍', name: 'SEO Meta',    desc: 'Titles & descriptions', min: 1 },
+  { id: 'review',   emoji: '✎', name: 'Content Review', desc: 'OSP editing-codes review', min: 2 },
+  { id: 'growth',   emoji: '↗', name: 'Growth Prompts', desc: 'Ads, SEO, email, CRO', min: 2 },
+  { id: 'swipe',    emoji: '▤', name: 'Swipe Files',  desc: 'Hooks & headlines', min: 2 },
+  { id: 'valuemap', emoji: '🗺', name: 'Value Map',   desc: 'OSP product positioning', min: 3 },
+  { id: 'workflow', emoji: '⚙', name: 'Workflow',    desc: 'Automation triggers', min: 3 },
+  { id: 'content',  emoji: '📝', name: 'Content Studio', desc: 'Posts, emails, captions', min: 3 },
+  { id: 'campaign', emoji: '✉', name: 'Campaigns',   desc: 'Ideas + checklists', min: 3 },
+  { id: 'keywords', emoji: '⌗', name: 'Keywords',    desc: 'Intent-based research', min: 3 },
+  { id: 'leadmagnet', emoji: '🧲', name: 'Lead Magnets', desc: 'Conversion ideas', min: 3 },
 ];
-function isPro() { return plan !== 'FREE'; }
 function renderTools() {
-  $('toolsGrid').innerHTML = TOOLS.map(t => `<div class="tool-card ${t.lock && !isPro() ? 'locked' : ''}" onclick="runTool('${t.id}');">
-    <span class="emoji">${t.emoji}</span> ${t.lock && !isPro() ? '<span class="lock-badge">PRO</span>' : ''}
-    <h3>${t.name}</h3><p>${t.desc}</p></div>`).join('');
+  $('toolsGrid').innerHTML = TOOLS.map(t => {
+    const locked = t.min > 0 && !hasTier(t.min);
+    return `<div class="tool-card ${locked ? 'locked' : ''}" onclick="runTool('${t.id}');">
+    <span class="emoji">${t.emoji}</span> ${locked ? '<span class="lock-badge">' + PLANS[t.min].price + '</span>' : ''}
+    <h3>${t.name}</h3><p>${t.desc}</p></div>`;
+  }).join('');
+  staggerRoot($('toolsGrid'), '.tool-card');
 }
 function showResult(title, text) {
   $('resultTitle').textContent = title;
@@ -1982,62 +2181,104 @@ function showResult(title, text) {
 }
 function hideResult() { $('resultArea').style.display = 'none'; }
 
+async function execTool(id, input) {
+  const d = await api('/api/tools/' + id, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ input: input ?? undefined }) });
+  if (d && d.error) {
+    if (d.type === 'upgrade') { toast('Locked — unlock at ' + PLANS[tierIndex(d.upgradeTo)].label, 'info'); openPlans(tierIndex(d.upgradeTo)); }
+    else toast(d.error || 'Tool failed', 'error');
+    return null;
+  }
+  return { title: d.title || id, text: d.text || '' };
+}
 async function runTool(id) {
   hideResult();
-  if (TOOLS.find(t => t.id === id)?.lock && !isPro()) {
-    showResult('PRO feature', 'Upgrade with /plans or /redeem in the bot to unlock ' + id + '.');
+  const t = TOOLS.find(x => x.id === id);
+  if (!t) return;
+  if (t.min > 0 && !hasTier(t.min)) {
+    toast('Locked — upgrade to ' + PLANS[t.min].label + ' to unlock', 'info');
+    openPlans(t.min);
     return;
   }
+  let input, res;
   if (id === 'plan') {
-    const d = await api('/api/stats');
-    showResult('Current plan', 'Plan: ' + (d.plan || 'free').toUpperCase() + '\nLeads: ' + (d.total || 0) + '\nBy stage:\n' + Object.entries(d.byStage || {}).map(([s, n]) => '- ' + STAGE_META[s].label + ': ' + n).join('\n'));
+    res = await execTool('plan', '');
   } else if (id === 'persona') {
     const tone = await promptDialog({ title: 'Persona', label: 'Tone', placeholder: 'e.g. friendly, professional, witty', value: 'friendly' });
+    if (tone === null) return;
     const aud = await promptDialog({ title: 'Persona', label: 'Audience', placeholder: 'e.g. general, marketers, developers', value: 'marketers' });
+    if (aud === null) return;
     const style = await promptDialog({ title: 'Persona', label: 'Style', placeholder: 'e.g. clear, concise, detailed', value: 'clear' });
-    showResult('Persona', 'Tone: ' + (tone || 'friendly') + '\nAudience: ' + (aud || 'marketers') + '\nStyle: ' + (style || 'clear'));
+    if (style === null) return;
+    res = await execTool('persona', `tone: ${tone}\naudience: ${aud}\nstyle: ${style}`);
   } else if (id === 'meta') {
-    const topic = await promptDialog({ title: 'SEO Meta', label: 'Topic for SEO meta', placeholder: 'e.g. AI marketing assistant', value: 'marketing' });
-    if (topic === null) return;
-    showResult('SEO Meta', await askAI('Generate SEO meta title (50-60 chars), meta description (155-160 chars), and URL slug for topic: ' + topic));
+    input = await promptDialog({ title: 'SEO Meta', label: 'Topic for SEO meta', placeholder: 'e.g. AI marketing assistant', value: 'marketing' });
+    if (input === null) return;
+    res = await execTool('meta', input);
   } else if (id === 'valuemap') {
-    const product = await promptDialog({ title: 'Value Map', label: 'Product', placeholder: 'e.g. our AI CRM', value: 'our product' });
-    if (product === null) return;
-    showResult('Value Map', await askAI('Generate an OSP-style product value map for product: ' + product));
+    input = await promptDialog({ title: 'Value Map', label: 'Product', placeholder: 'e.g. our AI CRM', value: 'our product' });
+    if (input === null) return;
+    res = await execTool('valuemap', input);
   } else if (id === 'review') {
-    const content = await promptDialog({ title: 'Content Review', label: 'Paste content to review', placeholder: 'Paste your copy here…' });
-    if (content === null) return;
-    showResult('Content Review', await askAI('Review this content using OSP editing codes (scope, flow, style, word choice, grammar, accuracy). Content: ' + (content || '(none provided)')));
+    input = await promptDialog({ title: 'Content Review', label: 'Paste content to review', placeholder: 'Paste your copy here…' });
+    if (input === null) return;
+    res = await execTool('review', input);
   } else if (id === 'growth') {
-    showResult('Growth Prompts', await askAI('List 5 battle-tested growth marketing prompts for paid ads, SEO, email, CRO, and content.'));
+    res = await execTool('growth', '');
   } else if (id === 'swipe') {
-    showResult('Swipe Files', await askAI('Provide 3 ready-to-use swipe file hooks/headlines for marketing campaigns.'));
+    res = await execTool('swipe', '');
   } else if (id === 'workflow') {
-    showResult('Workflow', 'Automation triggers are stage-change based. Use /workflow in the bot for the full description.');
+    res = await execTool('workflow', '');
   } else if (id === 'content') {
-    const topic = await promptDialog({ title: 'Content Studio', label: 'Content topic', placeholder: 'e.g. launch email', value: 'our product' });
-    if (topic === null) return;
-    showResult('Content Studio', await askAI('Write a social post + email subject + hook for: ' + topic));
+    input = await promptDialog({ title: 'Content Studio', label: 'Content topic', placeholder: 'e.g. launch email', value: 'our product' });
+    if (input === null) return;
+    res = await execTool('content', input);
   } else if (id === 'campaign') {
-    const theme = await promptDialog({ title: 'Campaigns', label: 'Campaign theme', placeholder: 'e.g. summer sale', value: 'our business' });
-    if (theme === null) return;
-    showResult('Campaign Ideas', await askAI('Give 5 creative campaign ideas for: ' + theme));
+    input = await promptDialog({ title: 'Campaigns', label: 'Campaign theme', placeholder: 'e.g. summer sale', value: 'our business' });
+    if (input === null) return;
+    res = await execTool('campaign', input);
   } else if (id === 'keywords') {
-    const niche = await promptDialog({ title: 'Keywords', label: 'Niche', placeholder: 'e.g. digital marketing', value: 'digital marketing' });
-    if (niche === null) return;
-    showResult('Keywords', await askAI('List 10 keywords for ' + niche + ' grouped by search intent.'));
+    input = await promptDialog({ title: 'Keywords', label: 'Niche', placeholder: 'e.g. digital marketing', value: 'digital marketing' });
+    if (input === null) return;
+    res = await execTool('keywords', input);
   } else if (id === 'leadmagnet') {
-    const offer = await promptDialog({ title: 'Lead Magnets', label: 'What do you sell?', placeholder: 'e.g. an AI CRM', value: 'our product' });
-    if (offer === null) return;
-    showResult('Lead Magnets', await askAI('Suggest 5 high-converting lead magnet ideas for: ' + offer));
+    input = await promptDialog({ title: 'Lead Magnets', label: 'What do you sell?', placeholder: 'e.g. an AI CRM', value: 'our product' });
+    if (input === null) return;
+    res = await execTool('leadmagnet', input);
   }
+  if (res) showResult(res.title, res.text);
 }
 
-function openPlans() {
-  api('/api/stats').then(s => {
-    showResult('Plans', 'Current: ' + s.plan + '\n\nFree — $0 (core tools)\nPRO — $14.99/mo (Content Studio, Campaigns, Keywords, Lead Magnets)\nEnterprise — custom\n\nRedeem a code in Telegram: /redeem CODE');
-    switchView('tools');
-  });
+async function buyPlan(idx) {
+  const tier = PLANS[idx].tier;
+  $('plansError').className = 'form-error';
+  try {
+    const d = await api('/api/billing/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tier, provider: 'stripe' }) });
+    if (d && d.status === 'pending-config') {
+      toast('Payments are being set up — we\'ll notify you when live.', 'info');
+      return;
+    }
+    if (d && d.url) { location.href = d.url; return; }
+    toast('Checkout launched', 'success');
+  } catch (e) { toast('Billing is not ready yet', 'error'); }
+}
+function openPlans(highlight) {
+  renderPlans(highlight);
+  $('plansBackdrop').classList.add('open');
+}
+function closePlans() { $('plansBackdrop').classList.remove('open'); }
+function renderPlans(highlight) {
+  $('plansList').innerHTML = PLANS.map((p, i) => {
+    const cur = tierIndex(plan) === i;
+    const sel = highlight === i;
+    return `<div class="plan-tile ${sel ? 'sel' : ''}">
+      <div class="pt-head">
+        <div><div class="pt-name">${p.label}</div><div class="pt-price num">${p.price}</div></div>
+        ${cur ? '<span class="lock-badge" style="color:var(--success);border-color:rgba(61,214,140,.35);background:var(--success-soft);">CURRENT</span>' : ''}
+      </div>
+      <div class="pt-desc">${p.desc}<br/>${p.blurb}</div>
+      <div>${cur ? '<span class="btn sm ghost" style="pointer-events:none;">Active</span>' : '<button class="btn sm primary" onclick="buyPlan(' + i + ');">Choose ' + p.label + '</button>'}</div>
+    </div>`;
+  }).join('');
 }
 
 /* ============================================================
@@ -2053,6 +2294,7 @@ let activeChannel = '';
 let activeConvId = null;
 function setChannel(ch) { activeChannel = ch; activeConvId = null; renderChannelPills(ch); loadInbox(); }
 function loadInbox() {
+  renderChannelSetup();
   api('/api/inbox').then(inbox => {
     const n = inbox.total || 0;
     $('inboxBadge').textContent = n;
@@ -2064,6 +2306,20 @@ function loadInbox() {
 }
 function renderMetricsRefresher() {
   api('/api/stats').then(s => renderMetrics(s)).catch(() => {});
+}
+function renderChannelSetup() {
+  const host = $('channelSetup');
+  if (!host || host.dataset.rendered) return;
+  host.dataset.rendered = '1';
+  const channels = [
+    { emoji: '📧', name: 'Email' }, { emoji: '💬', name: 'WhatsApp' }, { emoji: '✈️', name: 'Telegram' },
+    { emoji: '🎵', name: 'TikTok' }, { emoji: '🧿', name: 'Meta' },
+  ];
+  host.innerHTML = `<div class="cs-title"><span class="plug">🔌</span> Connect your channels — adapters are rolling out</div>
+    <div class="cs-grid">` + channels.map(ch => `
+      <button class="cs-chip" data-state="sim" onclick="toast('${ch.name} adapter is coming soon — simulated traffic stays live until then.','info');">
+        <span class="cs-em">${ch.emoji}</span> ${ch.name}<span class="cs-st">SIM</span>
+      </button>`).join('') + `</div>`;
 }
 function renderConversationList(convs) {
   if (!Array.isArray(convs)) convs = [];
@@ -2082,6 +2338,7 @@ function renderConversationList(convs) {
     </button>`;
   }).join('');
   $('convList').innerHTML = list || `<div class="thread-empty"><div class="e-icon">🗂</div>No conversations on this channel.<br/><span style="font-size:11px;">Simulated inbound traffic arrives every few minutes.</span></div>`;
+  staggerRoot($('convList'), '.conv-item');
 }
 async function selectConversation(id) {
   activeConvId = id;
@@ -2134,14 +2391,128 @@ async function sendReply(e) {
 }
 
 /* ============================================================
-   INIT
+   MOTION ENGINES + ACCOUNT UI
    ============================================================ */
+let motionOn = localStorage.getItem('evoss-motion') !== 'off';
+if (!motionOn) document.documentElement.dataset.motion = 'off';
+$('motionToggle').addEventListener('click', () => {
+  motionOn = !motionOn;
+  document.documentElement.dataset.motion = motionOn ? '' : 'off';
+  localStorage.setItem('evoss-motion', motionOn ? 'on' : 'off');
+  toast(motionOn ? 'Animations on' : 'Animations off', 'info');
+});
+
+function countUp(el, target, fmt) {
+  if (!motionOn) { el.textContent = fmt ? fmt(target) : target; return; }
+  const t0 = performance.now(), dur = 560;
+  const show = fmt || (v => v);
+  function tick(now) {
+    const p = Math.min((now - t0) / dur, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = show(Math.round(target * eased));
+    if (p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+function staggerRoot(root, selector) {
+  if (!motionOn || !root) return;
+  root.querySelectorAll(selector).forEach((el, i) => {
+    el.classList.remove('rise-in'); void el.offsetWidth;
+    el.classList.add('rise-in');
+    el.style.animationDelay = Math.min(i, 14) * 26 + 'ms';
+  });
+}
+function confetti() {
+  if (!motionOn) return;
+  const colors = ['#5b7cff', '#a78bfa', '#f472b6', '#34d399', '#fbbf24'];
+  for (let i = 0; i < 64; i++) {
+    const p = document.createElement('i');
+    p.className = 'confetti';
+    p.style.left = (Math.random() * 100) + 'vw';
+    p.style.top = (Math.random() * 30 - 10) + 'vh';
+    p.style.width = p.style.height = (3 + Math.random() * 5) + 'px';
+    p.style.background = colors[(Math.random() * colors.length) | 0];
+    p.style.setProperty('--dx', (Math.random() * 160 - 80) + 'px');
+    p.style.setProperty('--dy', (110 + Math.random() * 90) + 'px');
+    p.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1600);
+  }
+}
+
+document.addEventListener('click', e => {
+  if (!motionOn) return;
+  const host = e.target.closest('.btn, .icon-btn, .pill, .suggest-chip, .nav-item');
+  if (!host || e.button !== 0) return;
+  const r = host.getBoundingClientRect();
+  const s = Math.max(r.width, r.height) * 1.1;
+  const rip = document.createElement('i');
+  rip.className = 'ripple';
+  rip.style.width = rip.style.height = s + 'px';
+  rip.style.left = (e.clientX - r.left - s / 2) + 'px';
+  rip.style.top = (e.clientY - r.top - s / 2) + 'px';
+  if (!host.querySelector('.ripple')) host.appendChild(rip);
+  setTimeout(() => rip.remove(), 650);
+});
+
+if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+  const glow = document.createElement('div');
+  glow.id = 'cursorGlow';
+  document.body.appendChild(glow);
+  document.body.classList.add('glowing');
+  let gx = innerWidth / 2, gy = innerHeight / 2, rx = gx, ry = gy;
+  window.addEventListener('pointermove', e => {
+    gx = e.clientX; gy = e.clientY;
+    const nav = document.querySelector('.nav-scroll');
+    if (nav) { nav.style.setProperty('--mx', (e.clientX - nav.getBoundingClientRect().left) + 'px'); nav.style.setProperty('--my', (e.clientY - nav.getBoundingClientRect().top) + 'px'); }
+    tiltFrom(e.target, e);
+  });
+  (function loop() { rx += (gx - rx) * 0.12; ry += (gy - ry) * 0.12; glow.style.transform = `translate(${rx - 180}px, ${ry - 180}px)`; requestAnimationFrame(loop); })();
+}
+function tiltFrom(elT, e) {
+  const card = elT.closest && elT.closest('.deal, .tool-card');
+  if (!card) return;
+  const r = card.getBoundingClientRect();
+  const px = (e.clientX - r.left) / r.width - 0.5;
+  const py = (e.clientY - r.top) / r.height - 0.5;
+  card.classList.add('tilted');
+  card.style.setProperty('--ty', (px * 8).toFixed(2) + 'deg');
+  card.style.setProperty('--tx', (-py * 8).toFixed(2) + 'deg');
+}
+document.addEventListener('pointermove', e => tiltFrom(e.target, e), { capture: true });
+document.addEventListener('mouseleave', () => document.querySelectorAll('.tilted').forEach(c => c.classList.remove('tilted')));
+
+function renderUserChip(a) {
+  const chip = $('userChip');
+  if (a && a.name) { chip.textContent = (a.name.trim()[0] || '?').toUpperCase(); chip.title = `${a.name} · ${PLANS[tierIndex(a.plan)].label}`; }
+  else { chip.textContent = '?'; chip.title = 'Signed out'; }
+}
+$('userChip').addEventListener('click', async () => {
+  if (!account) { location.href = '/login'; return; }
+  const out = await confirmDialog({ title: 'Signed in as ' + account.name, body: `You're on the <strong>${PLANS[tierIndex(account.plan)].label}</strong> plan.<br/><br/><button class="btn sm primary" onclick="dismissConfirm(false);openPlans(tierIndex('${account.plan}'));" style="pointer-events:auto;">Upgrade plan</button>`, ok: 'Sign out', danger: false });
+  if (out) { await api('/api/auth/logout', { method: 'POST' }); location.href = '/login'; }
+});
+async function initAuth() {
+  try {
+    const me = await api('/api/me');
+    if (me && me.account) {
+      account = me.account;
+      renderUserChip(account);
+      if (tierIndex(account.plan) > tierIndex(plan)) { plan = account.plan.toLowerCase(); }
+      $('planChip').textContent = PLANS[tierIndex(plan)].label.toUpperCase() + ' · ' + PLANS[tierIndex(plan)].price;
+      $('planFeatures').textContent = planFeaturesFor(plan);
+      renderTools();
+      loadDashboard(true);
+    }
+  } catch (e) { /* signed out → server should have redirected already */ }
+}
+
 renderChannelPills('');
 renderStagePills();
 renderSuggests();
 renderTools();
-loadDashboard(true);
-setInterval(() => loadDashboard(false), 20000);
+initAuth();
+setInterval(() => { if (account) loadDashboard(false); }, 20000);
 </script>
 </body>
 </html>

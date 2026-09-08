@@ -15,6 +15,7 @@ export type Lead = {
   tags?: string[];
   value?: number; // deal value in USD
   owner?: string; // sales admin / owner handle
+  accountId?: string; // owning dashboard account (per-account data model)
   createdAt: string;
   updatedAt?: string;
 };
@@ -76,6 +77,24 @@ export async function getLeads(): Promise<Lead[]> {
   return readJson();
 }
 
+export async function getLeadsForAccount(accountId: string): Promise<Lead[]> {
+  return readJson().filter((l) => l.accountId === accountId);
+}
+
+// First account (owner) adopts the pre-existing demo data that has no owner.
+export async function adoptUnownedLeads(accountId: string): Promise<number> {
+  const leads = readJson();
+  let adopted = 0;
+  for (const l of leads) {
+    if (!l.accountId) {
+      l.accountId = accountId;
+      adopted++;
+    }
+  }
+  if (adopted > 0) writeJson(leads);
+  return adopted;
+}
+
 export async function addLead(lead: { telegramId: string; name?: string; stage?: string } & Record<string, any>): Promise<Lead> {
   if (!lead?.telegramId) throw new Error('telegramId is required');
   const leads = readJson();
@@ -105,6 +124,7 @@ export async function addLead(lead: { telegramId: string; name?: string; stage?:
     tags: patches.tags,
     value: patches.value,
     owner: patches.owner,
+    accountId: lead.accountId ? String(lead.accountId).slice(0, 80) : undefined,
     createdAt: new Date().toISOString(),
   };
 

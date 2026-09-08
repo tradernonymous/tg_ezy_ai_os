@@ -45,14 +45,11 @@ function getUid(ctx: any): string {
   return ctx?.from?.id ? ctx.from.id.toString() : '';
 }
 
-// ---------- Monetization config (EzyAi-style) ----------
+// ---------- Monetization config (unified 5-tier via plans.ts) ----------
 const ADMIN_TELEGRAM_ID = (process.env.ADMIN_TELEGRAM_ID || '').toString();
 const PRO_ACCESS_IDS = (process.env.PRO_ACCESS_IDS || '').split(',').map((s) => s.trim()).filter(Boolean);
-const PLANS = [
-  { tier: 'free', label: 'Free', price: '$0', features: 'Leads, Stats, Plan, Persona, Meta, Value, Review, Growth, Swipe, Workflow' },
-  { tier: 'pro', label: 'PRO', price: '$14.99/mo', features: 'Everything in Free + Content Studio, Campaigns, Keywords, Lead Magnets, Exports, Auto-workflows, Priority AI' },
-  { tier: 'enterprise', label: 'Enterprise', price: 'Custom', features: 'Everything in PRO + multi-seat, CSV exports, dedicated support' },
-];
+import { PLANS as ALL_PLANS, mapLegacy, tierIndex } from './plans';
+const PLANS = ALL_PLANS.map((p) => ({ tier: p.tier, label: p.label, price: p.price.replace('/mo', ''), features: p.features.join(', ') }));
 const PRO_FEATURES = ['📝 Content', '✉️ Campaign', '🔑 Keywords', '🧲 Lead Magnet', '⚙️ Workflow', '📈 Growth', '📦 Export CSV'];
 
 function isPayingUser(id?: string): boolean {
@@ -60,9 +57,10 @@ function isPayingUser(id?: string): boolean {
   if (PRO_ACCESS_IDS.includes(id)) return true;
   const s = userState[id];
   if (!s) return false;
-  if (s.plan === 'enterprise') return true;
-  if (s.plan === 'pro') {
-    if (s.proUntil && new Date(s.proUntil).getTime() <= Date.now()) {
+  const tier = mapLegacy(s.plan);
+  if (tierIndex(tier) > 0) {
+    // Expired recurring access (legacy pro → navigator) drops back to free.
+    if (tier === 'navigator' && s.proUntil && new Date(s.proUntil).getTime() <= Date.now()) {
       s.plan = 'free';
       delete s.proUntil;
       saveState(userState);
@@ -79,7 +77,10 @@ function isAdmin(id?: string): boolean {
 }
 
 function getPlanLabel(state: any): string {
-  if (state?.plan) return PLANS.find((p) => p.tier === state.plan)?.label || String(state.plan).toUpperCase();
+  if (state?.plan) {
+    const tier = mapLegacy(state.plan);
+    return PLANS.find((p) => p.tier === tier)?.label || String(tier).toUpperCase();
+  }
   if (state?.trialEndsAt && new Date(state.trialEndsAt).getTime() > Date.now()) return 'PRO (trial)';
   return 'Free';
 }
@@ -595,13 +596,13 @@ hearsMenu('💳 Set Free', (ctx: any) => {
 });
 hearsMenu('💳 Set Pro', (ctx: any) => {
   const id = getUid(ctx);
-  if (id) { userState[id] = userState[id] || {}; userState[id].plan = 'pro'; saveState(userState); }
-  ctx.reply('💳 Plan updated to *PRO*', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
+  if (id) { userState[id] = userState[id] || {}; userState[id].plan = 'navigator'; saveState(userState); }
+  ctx.reply('💳 Plan updated to *NAVIGATOR*', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
 });
 hearsMenu('💳 Set Enterprise', (ctx: any) => {
   const id = getUid(ctx);
-  if (id) { userState[id] = userState[id] || {}; userState[id].plan = 'enterprise'; saveState(userState); }
-  ctx.reply('💳 Plan updated to *ENTERPRISE*', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
+  if (id) { userState[id] = userState[id] || {}; userState[id].plan = 'thinker'; saveState(userState); }
+  ctx.reply('💳 Plan updated to *THINKER*', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
 });
 
 hearsMenu('🎭 Persona', (ctx: any) => {
@@ -1165,7 +1166,7 @@ function redeemCode(ctx: any, code: string): boolean {
       saveState(userState);
       ctx.reply(`🎁 Trial activated: *${days} days of PRO*! Enjoy all premium marketing tools.`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
     } else if (entry.kind === 'months') {
-      userState[id].plan = 'pro';
+      userState[id].plan = 'navigator';
       const months = entry.months;
       userState[id].proUntil = new Date(Date.now() + months * 30 * 86400000).toISOString();
       if (!alreadyUsed) used.push(id);
@@ -1277,7 +1278,7 @@ bot.action(/^plan_/, async (ctx: any) => {
     userState[id].plan = tier;
     saveState(userState);
   }
-  await ctx.editMessageText(`💳 Plan set to *${tier.toUpperCase()}*.\n\n${PLANS.find((p) => p.tier === tier)?.features || ''}`, { parse_mode: 'Markdown' });
+  await ctx.editMessageText(`💳 Plan set to *${PLANS.find((p) => p.tier === tier)?.label || tier.toUpperCase()}*.\n\n${PLANS.find((p) => p.tier === tier)?.features || ''}`, { parse_mode: 'Markdown' });
   ctx.reply('Done! What next?', showMenu(ctx, 'main') as any);
 });
 

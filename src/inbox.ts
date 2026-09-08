@@ -22,6 +22,7 @@ export interface Conversation {
   unread: number;
   lastAt: string;
   tags?: string[];
+  accountId?: string;
   messages: ConvMessage[];
 }
 
@@ -149,28 +150,44 @@ export function seedIfEmpty(): void {
 
 // ---------- API ----------
 
-export function getConversations(channel?: Channel): Conversation[] {
+export function getConversations(accountId?: string, channel?: Channel): Conversation[] {
   seedIfEmpty();
   const all = readJson();
-  const filtered = channel ? all.filter((c) => c.channel === channel) : all;
+  const scoped = accountId ? all.filter((c) => !c.accountId || c.accountId === accountId) : all;
+  const filtered = channel ? scoped.filter((c) => c.channel === channel) : scoped;
   return filtered.sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1));
 }
 
-export function getConversation(id: string): Conversation | undefined {
-  return readJson().find((c) => c.id === id);
-}
-
-export function unreadTotals(): { total: number; byChannel: Partial<Record<Channel, number>> } {
+export function unreadTotals(accountId?: string): { total: number; byChannel: Partial<Record<Channel, number>> } {
   seedIfEmpty();
   const all = readJson();
+  const scoped = accountId ? all.filter((c) => !c.accountId || c.accountId === accountId) : all;
   const byChannel: Partial<Record<Channel, number>> = {};
   let total = 0;
-  for (const c of all) {
+  for (const c of scoped) {
     const n = c.unread || 0;
     byChannel[c.channel] = (byChannel[c.channel] || 0) + n;
     total += n;
   }
   return { total, byChannel };
+}
+
+// First account (owner) adopts seeded conversations without an owner.
+export function adoptUnownedConvs(accountId: string): number {
+  const convs = readJson();
+  let adopted = 0;
+  for (const c of convs) {
+    if (!c.accountId) {
+      c.accountId = accountId;
+      adopted++;
+    }
+  }
+  if (adopted > 0) writeJson(convs);
+  return adopted;
+}
+
+export function getConversation(id: string): Conversation | undefined {
+  return readJson().find((c) => c.id === id);
 }
 
 export function markRead(id: string): Conversation | undefined {

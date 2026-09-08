@@ -5,6 +5,8 @@ import * as os from 'os';
 import * as path from 'path';
 import {
   getLeads,
+  getLeadsForAccount,
+  adoptUnownedLeads,
   addLead,
   updateLead,
   updateLeadByTelegramId,
@@ -69,4 +71,14 @@ test('leadStore: toCsv escapes commas and quotes', async () => {
   const csv = toCsv(await getLeads());
   assert.ok(csv.includes('"Quoted, ""Name"""'));
   assert.ok(csv.split('\n')[0].includes('telegramId'), 'header should contain telegramId');
+});
+
+test('leadStore: owner scoping + adoptUnownedLeads (per-account data model)', async () => {
+  await addLead({ telegramId: 'a1', name: 'No owner yet' });
+  await addLead({ telegramId: 'a2', name: 'Already owned', accountId: 'acc-x' });
+  assert.equal((await getLeadsForAccount('acc-x')).length, 1);
+  const adopted = await adoptUnownedLeads('acc-x');
+  assert.equal(adopted, 1, 'first account adopts the unowned demo lead');
+  assert.equal((await getLeadsForAccount('acc-x')).length, 2);
+  assert.equal((await getLeadsForAccount('acc-y')).length, 0);
 });
