@@ -15,7 +15,7 @@
   :root {
     --bg: #05030f; --bg-2: #0a0620; --surface: rgba(16,12,38,.72);
     --surface-2: rgba(26,20,58,.72); --border: rgba(139,92,246,.22); --border-strong: rgba(168,85,247,.45);
-    --text: #f3f1ff; --text-2: #b7b0e0; --text-3: #6f6a99;
+    --text: #f6f4ff; --text-2: #c6c0e8; --text-3: #a09ac8;
     --purple: #8b5cf6; --violet: #a855f7; --cyan: #22d3ee; --fuchsia: #e879f9; --pink: #f472b6; --lime: #a3e635; --green: #0BD97E; --gold: #F4C63D;
     --r-lg: 22px; --r: 12px;
     --tr-smooth: 320ms cubic-bezier(.22,1,.36,1);
@@ -55,6 +55,7 @@
   /* ---------- header ---------- */
   header { position: sticky; top: 0; z-index: 80; transition: var(--tr-smooth);
     background: rgba(5,3,15,.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid transparent; }
+  header#siteHeader { overflow: hidden; }
   header.scrolled { background: rgba(5,3,15,.82); border-bottom-color: var(--border); box-shadow: 0 12px 40px rgba(0,0,0,.45); }
   nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; }
   .brand { display: flex; align-items: center; gap: 12px; font-family: var(--font-d); font-weight: 700; font-size: 17px; }
@@ -70,7 +71,10 @@
   .btn:hover { border-color: var(--cyan); box-shadow: 0 0 22px rgba(34,211,238,.28); }
   .btn:active { transform: scale(.97); }
   .btn.primary { background: linear-gradient(100deg, var(--purple), var(--violet) 55%, var(--fuchsia)); color: #fff;
-    border-color: rgba(255,255,255,.18); box-shadow: 0 8px 30px rgba(139,92,246,.45), inset 0 1px 0 rgba(255,255,255,.25); }
+    border-color: rgba(255,255,255,.18); box-shadow: 0 8px 30px rgba(139,92,246,.45), inset 0 1px 0 rgba(255,255,255,.25);
+    animation: ctaGlow 3.4s ease-in-out infinite; }
+  @keyframes ctaGlow { 0%,100% { box-shadow: 0 8px 30px rgba(139,92,246,.45), inset 0 1px 0 rgba(255,255,255,.25); }
+    50% { box-shadow: 0 8px 46px rgba(168,85,247,.8), 0 0 34px rgba(34,211,238,.45), inset 0 1px 0 rgba(255,255,255,.3); } }
   .btn.primary:hover { box-shadow: 0 10px 36px rgba(168,85,247,.6), 0 0 26px rgba(34,211,238,.3); }
   .btn.primary::after, .btn.spectrum::after { content: ''; position: absolute; top: 0; bottom: 0; width: 34%; left: -40%;
     background: linear-gradient(105deg, transparent, rgba(255,255,255,.45), transparent); transform: skewX(-18deg); animation: sheen 5.2s ease-in-out infinite; }
@@ -90,6 +94,9 @@
   .badge { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2);
     background: var(--surface); border: 1px solid var(--border); padding: 6px 14px; border-radius: 999px; margin-bottom: 26px; }
   .badge .live { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulse 2s infinite; }
+  .rainbow { background: linear-gradient(90deg, var(--gold), var(--pink), var(--cyan), var(--green), var(--gold)); background-size: 300% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent; animation: gradShift 5s linear infinite, hueSwing 9s linear infinite; }
+  @keyframes hueSwing { to { filter: hue-rotate(360deg); } }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
   h1 { font-size: clamp(38px, 6.4vw, 68px); line-height: 1.04; font-weight: 700; margin-bottom: 20px; }
   h1 .grad { background: linear-gradient(100deg, var(--cyan), var(--purple), var(--fuchsia), var(--cyan)); background-size: 300% 100%;
@@ -271,8 +278,21 @@
   .plan { border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--border); padding: 22px 18px;
     display: flex; flex-direction: column; gap: 10px; position: relative; transition: var(--tr-smooth); }
   .plan:hover { border-color: var(--border-strong); transform: translateY(-4px); }
-  .plan.pop { border-color: rgba(232,121,249,.55); background: linear-gradient(180deg, rgba(139,92,246,.1), rgba(8,5,26,.9) 60%);
-    box-shadow: 0 0 40px rgba(139,92,246,.28), inset 0 0 30px rgba(232,121,249,.06); }
+  .plan.pop { border-color: rgba(232,121,249,.6); background: linear-gradient(180deg, rgba(139,92,246,.16), rgba(8,5,26,.92) 60%);
+    box-shadow: 0 0 60px rgba(168,85,247,.4), 0 0 130px rgba(34,211,238,.16), inset 0 0 34px rgba(232,121,249,.1);
+    z-index: 2; transform: scale(1.07); animation: popFloat 5s ease-in-out infinite; }
+  .plan.pop:hover { transform: scale(1.09); box-shadow: 0 0 85px rgba(168,85,247,.6), 0 0 160px rgba(34,211,238,.26), inset 0 0 34px rgba(232,121,249,.16); }
+  @keyframes popFloat { 0%,100% { transform: scale(1.07) translateY(0); } 50% { transform: scale(1.1) translateY(-6px); } }
+  .plan.pop::before { content: ''; position: absolute; inset: -1.4px; z-index: -1; border-radius: 24px; padding: 1.6px;
+    background: conic-gradient(from 0deg, var(--cyan), var(--purple), var(--fuchsia), var(--gold), var(--pink), var(--cyan));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude;
+    animation: borderHue 5s linear infinite; }
+  @keyframes borderHue { to { filter: hue-rotate(360deg); } }
+  .plan.pop .price { font-size: 28px; }
+  .plan.pop .price small { color: var(--text-2); }
+  .plan.pop h4 { font-size: 16px; }
+  .plan.pop .btn { padding: 13px 16px; font-size: 14.5px; }
   .plan h4 { font-size: 15px; display: flex; align-items: center; gap: 8px; }
   .plan .price { font-size: 24px; font-weight: 700; font-family: var(--font-d); }
   .plan .price small { font-size: 12px; font-weight: 600; color: var(--text-3); }
@@ -309,11 +329,70 @@
     display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; position: relative; z-index: 1; }
   footer .brand img { height: 26px; }
 
+  /* ---------- journey route (railway-style spine) ---------- */
+  #route { position: absolute; left: 50%; top: 76px; bottom: 96px; width: 2px; z-index: 0; pointer-events: none;
+    transform: translateX(-50%); opacity: .45;
+    background: repeating-linear-gradient(to bottom, rgba(139,92,246,.6) 0 12px, transparent 12px 26px); }
+  #route::before { content: ''; position: absolute; left: 0; top: 0; right: 0; height: 100%;
+    background: linear-gradient(to bottom, transparent, rgba(34,211,238,0) 40%, rgba(34,211,238,.95) 52%, rgba(232,121,249,0) 74%, transparent);
+    background-size: 2px 30%; background-repeat: no-repeat; background-position: 0 0%;
+    animation: rideDown 12s ease-in-out infinite alternate; }
+  @keyframes rideDown { to { background-position: 0 100%; } }
+  .route-node { position: absolute; left: 50%; top: 48px; z-index: 3; width: 12px; height: 12px; margin-left: -6px;
+    transform: rotate(45deg); border-radius: 3px; pointer-events: none;
+    background: linear-gradient(135deg, var(--cyan), var(--fuchsia));
+    box-shadow: 0 0 14px rgba(34,211,238,.9), 0 0 30px rgba(232,121,249,.6);
+    animation: nodePulse 2.6s ease-in-out infinite; }
+  @keyframes nodePulse { 0%,100% { box-shadow: 0 0 10px rgba(34,211,238,.7), 0 0 24px rgba(232,121,249,.5); } 50% { box-shadow: 0 0 24px rgba(34,211,238,1), 0 0 56px rgba(232,121,249,.95); } }
+  .route-node.final { width: 14px; height: 14px; margin-left: -7px; background: linear-gradient(135deg, var(--gold), var(--pink)); box-shadow: 0 0 16px rgba(244,196,61,.9), 0 0 36px rgba(244,114,182,.7); }
+
+  /* ---------- ask AI live cards ---------- */
+  .ask-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .ask-card { position: relative; display: flex; flex-direction: column; border-radius: var(--r-lg); overflow: hidden; min-height: 360px;
+    background: linear-gradient(160deg, rgba(22,15,52,.92), rgba(8,5,24,.95)); border: 1px solid var(--border-strong);
+    transition: var(--tr-smooth); box-shadow: 0 20px 60px rgba(0,0,0,.45); }
+  .ask-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(120% 80% at 50% 0%, rgba(139,92,246,.16), transparent 55%); }
+  .ask-card:hover { transform: translateY(-5px); border-color: var(--cyan); box-shadow: 0 24px 70px rgba(34,211,238,.2), 0 0 46px rgba(139,92,246,.3); }
+  .ask-head { position: relative; display: flex; align-items: center; gap: 11px; padding: 15px 16px; border-bottom: 1px solid var(--border); }
+  .ask-ic { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(139,92,246,.28), rgba(34,211,238,.15)); border: 1px solid var(--border-strong); }
+  .ask-ic svg { width: 18px; height: 18px; color: var(--cyan); }
+  .ask-head b { font-size: 14px; display: block; }
+  .ask-head small { display: block; font-size: 11px; color: var(--text-2); margin-top: 1px; }
+  .ask-dot { margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulse 2s infinite; }
+  .ask-log { position: relative; flex: 1; padding: 14px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; min-height: 120px; }
+  .msg { max-width: 88%; padding: 9px 12px; border-radius: 14px; font-size: 12.5px; line-height: 1.55; animation: bubbleIn .24s ease; word-wrap: break-word; }
+  .msg.ai { align-self: flex-start; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; }
+  .msg.me { align-self: flex-end; background: linear-gradient(100deg, var(--purple), var(--violet)); color: #fff; border: 1px solid rgba(255,255,255,.16); border-bottom-right-radius: 4px; }
+  @keyframes bubbleIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .tdots { display: inline-flex; gap: 4px; }
+  .tdots i { width: 5px; height: 5px; border-radius: 50%; background: var(--cyan); animation: tB 1s ease-in-out infinite; }
+  .tdots i:nth-child(2) { animation-delay: .15s; } .tdots i:nth-child(3) { animation-delay: .3s; }
+  @keyframes tB { 0%,100% { transform: translateY(0); opacity: .4; } 50% { transform: translateY(-4px); opacity: 1; } }
+  .ask-chips { position: relative; display: flex; gap: 8px; padding: 0 16px 11px; flex-wrap: wrap; }
+  .ask-chips button { font-size: 11.5px; font-weight: 600; color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; cursor: pointer; transition: var(--tr-smooth); }
+  .ask-chips button:hover { color: var(--text); border-color: var(--cyan); box-shadow: 0 0 14px rgba(34,211,238,.3); }
+  .ask-input { position: relative; display: flex; align-items: center; gap: 8px; padding: 11px 16px 15px; border-top: 1px solid var(--border); }
+  .ask-input input { flex: 1; height: 42px; min-width: 0; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface-2);
+    color: var(--text); padding: 0 16px; font-size: 13.5px; font-family: var(--font); outline: none; transition: border-color .2s, box-shadow .2s; }
+  .ask-input input::placeholder { color: var(--text-3); }
+  .ask-input input:focus { border-color: var(--cyan); box-shadow: 0 0 18px rgba(34,211,238,.28); }
+  .ask-input button { width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; border: 1px solid var(--border-strong); cursor: pointer;
+    background: linear-gradient(135deg, var(--cyan), var(--purple)); color: #06101a; font-size: 17px; font-weight: 800; line-height: 1;
+    transition: transform 150ms ease, opacity 150ms ease; box-shadow: 0 6px 18px rgba(34,211,238,.35); }
+  .ask-input button:hover { transform: scale(1.1); }
+  .ask-input button:disabled { opacity: .5; cursor: wait; transform: none; }
+  .ask-note { text-align: center; font-size: 12px; color: var(--text-3); margin-top: 18px; }
+
   /* ---------- responsive ---------- */
   @media (max-width: 1080px) {
     .tools { grid-template-columns: repeat(3, 1fr); }
     .plans { grid-template-columns: repeat(3, 1fr); }
     .plan:nth-child(4), .plan:nth-child(5) { grid-column: span 1; }
+    .plan.pop { animation: none; transform: none; }
+    .plan.pop:hover { transform: translateY(-4px) scale(1.02); }
+    .ask-grid { grid-template-columns: 1fr; max-width: 600px; margin: 0 auto; }
+    #route, .route-node { display: none; }
     .flow { grid-template-columns: repeat(2, 1fr); gap: 20px 14px; }
     .conn { display: none; }
     .stats { grid-template-columns: repeat(2, 1fr); }
@@ -334,12 +413,17 @@
     .sat-chip { font-size: 11px; padding: 6px 10px; }
     .sat-chip.c5 { left: -2%; } .sat-chip.c6 { right: -2%; }
     section { padding: 64px 0; }
+    .ask-chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 8px; }
+    .ask-input { padding: 11px 14px 15px; }
+    .ask-card { min-height: 340px; }
     .convert { padding: 40px 20px; }
   }
   @media (max-width: 460px) {
     .tools { grid-template-columns: 1fr 1fr; }
     .nav-links a:not(.btn) { display: none; }
     .mock-grid { grid-template-columns: 1fr 1fr; }
+    .ask-input input { font-size: 16px; }
+    #floatCta { bottom: calc(16px + env(safe-area-inset-bottom)); max-width: calc(100vw - 24px); }
   }
   @media (pointer: coarse) { .tool:hover { transform: none; } }
 </style>
@@ -348,6 +432,7 @@
 <div id="starfield" aria-hidden="true"></div>
 <div id="orbs" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
 <div id="grid" aria-hidden="true"></div>
+<div id="route" aria-hidden="true"></div>
 <div id="progress" aria-hidden="true"></div>
 
 <header id="siteHeader">
@@ -358,23 +443,29 @@
         <a href="#band">Problem</a>
         <a href="#inbox">Unified Inbox</a>
         <a href="#flow">Workflow</a>
+        <a href="#askai">Ask AI</a>
         <a href="#pricing">Pricing</a>
         <label class="motion-toggle" title="Toggle motion">
           <input type="checkbox" id="motionToggle" checked><span id="motionFace">✦</span>
         </label>
-        <a class="btn primary" href="/dashboard">Start free →</a>
+        <a class="btn primary" href="/dashboard">Start Free →</a>
       </div>
     </nav>
+    <div id="hdrFx" aria-hidden="true">
+      <span class="glyph-idle" style="left:12%;top:14px;color:#22d3ee;font-size:10px;">✧</span>
+      <span class="glyph-idle" style="left:38%;top:8px;color:#e879f9;font-size:9px;animation-delay:2.4s;">✦</span>
+      <span class="glyph-idle" style="right:26%;top:16px;color:#F4C63D;font-size:10px;animation-delay:5.1s;">✶</span>
+    </div>
   </div>
 </header>
 
 <header class="hero wrap">
-  <div class="badge"><span class="live"></span> The $3,000/mo marketing stack — for $29</div>
+  <div class="badge"><span class="live"></span> The <span class="rainbow">$3,000/mo</span> marketing stack — for <span class="rainbow">$29</span></div>
   <h1>Your leads disappear in feeds.<br>Your day disappears in tabs.<br><span class="grad">EzyViral OS closes the loop.</span></h1>
   <p class="sub">Capture every lead, qualify it, turn AI loose on the content, and reply to every channel from one command center. No more ten-tab chaos — one glowing dashboard that never forgets a follow-up.</p>
   <div class="cta-row">
-    <a class="btn primary" href="/dashboard">Start free — no card</a>
-    <a class="btn" href="#inbox">See the Unified Inbox ↓</a>
+    <a class="btn primary" href="/dashboard">Start Free — No Card</a>
+    <a class="btn" href="#inbox">See The Unified Inbox ↓</a>
   </div>
   <div class="pain-strip reveal in">
     <span class="pain">Leads buried in DMs</span>
@@ -448,13 +539,14 @@
 </section>
 
 <section class="cosmos" id="inbox">
+  <div class="route-node" aria-hidden="true"></div>
   <canvas id="sky" aria-hidden="true"></canvas>
   <div class="spark" aria-hidden="true"></div>
   <div class="scan" aria-hidden="true"></div>
   <div class="shoot" aria-hidden="true"></div>
   <div class="inner wrap reveal">
     <div class="kicker">THE CENTERPIECE</div>
-    <p class="claim">Unified inbox is the single <span class="grad">most-requested — and most expensive</span> integration out there.<br><sub>Standalone inbox consolidators run $75–99 per user. Here it ships for $29. Or preview it free.</sub></p>
+    <p class="claim">Unified inbox is the single <span class="grad">most-requested — and most expensive</span> integration out there.<br><sub>Standalone inbox consolidators run <span class="rainbow">$75–99</span> per user. Here it ships for <span class="rainbow">$29</span>. Or preview it free.</sub></p>
     <div class="saturn-wrap">
       <div class="ring r1"></div>
       <div class="ring r2"></div>
@@ -475,12 +567,13 @@
       <span class="ibx-point">Built-in, not bolted on</span>
     </div>
     <div class="cta-row">
-      <a class="btn spectrum" href="/dashboard"><span class="t">Unlock the Unified Inbox →</span></a>
+      <a class="btn spectrum" href="/dashboard"><span class="t">Unlock The Unified Inbox →</span></a>
     </div>
   </div>
 </section>
 
 <section id="flow">
+  <div class="route-node" aria-hidden="true"></div>
   <div class="wrap">
     <div class="sec-head reveal">
       <div class="kicker">The loop</div>
@@ -497,6 +590,7 @@
 </section>
 
 <section id="tools">
+  <div class="route-node" aria-hidden="true"></div>
   <div class="wrap">
     <div class="sec-head reveal">
       <div class="kicker">The arsenal</div>
@@ -504,11 +598,25 @@
       <p>One account, five honest tiers — starting free. Upgrade only when your pipeline earns it.</p>
     </div>
     <div class="tools" id="toolsGrid"></div>
-    <div class="cta-row" style="margin-top:34px;"><a class="btn primary" href="/dashboard">Unlock the full arsenal →</a></div>
+    <div class="cta-row" style="margin-top:34px;"><a class="btn primary" href="/dashboard">Unlock The Full Arsenal →</a></div>
+  </div>
+</section>
+
+<section id="askai">
+  <div class="route-node" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="kicker">Try It Live — No Sign-Up</div>
+      <h2>Ask the <span class="grad">AI brains</span> right here</h2>
+      <p>No demo video. Chat live with the same model engine that powers your dashboard — three brains, one page.</p>
+    </div>
+    <div class="ask-grid" id="askGrid"></div>
+    <p class="ask-note reveal">✦ Live free preview — a few calls per session, then the full Ask AI engine (with pipeline memory) unlocks with your plan.</p>
   </div>
 </section>
 
 <section id="pricing">
+  <div class="route-node" aria-hidden="true"></div>
   <div class="wrap">
     <div class="sec-head reveal">
       <div class="kicker">Pricing</div>
@@ -519,13 +627,14 @@
   </div>
 </section>
 
-<section>
+<section id="convert">
   <div class="wrap">
     <div class="convert reveal">
-      <h2>Ready to stop juggling tabs?</h2>
+      <div class="route-node final" aria-hidden="true"></div>
+      <h2>Ready to <span class="grad">stop juggling tabs?</span></h2>
       <p class="sub">Your workspace is 60 seconds away. Free, no card. Sign in with Google, Telegram — or get a Magic Key to your email.</p>
       <div class="cta-row">
-        <a class="btn primary" href="/dashboard" style="padding:15px 34px;font-size:15px;">Open my command center →</a>
+        <a class="btn primary" href="/dashboard" style="padding:15px 34px;font-size:15px;">Command Your AI Now →</a>
       </div>
       <div class="provider-strip">
         <span>@ Google</span><span>✈️ Telegram</span><span>✦ Magic Key</span><span>💳 No card required</span>
@@ -603,11 +712,11 @@ if (grid) TOOLS.forEach((t, i) => {
 
 // Pricing (from plans.ts) — CTA copy per spec
 const PLANS = [
-  { label:'Free', price:0, feat:['Add leads','Pipeline board','Inbox preview','2 AI tools'], cta:'Start free', cls:'' },
-  { label:'Hobby', price:9, feat:['Plan · Persona · SEO Meta','More AI generations','Chat priority'], cta:'Let me try', cls:'' },
+  { label:'Free', price:0, feat:['Add leads','Pipeline board','Inbox preview','2 AI tools'], cta:'Start Free', cls:'' },
+  { label:'Hobby', price:9, feat:['Plan · Persona · SEO Meta','More AI generations','Chat priority'], cta:'Let Me Try', cls:'' },
   { label:'Marketer', price:29, feat:['Content Review','Growth Prompts','Swipe Files'], cta:'Go Marketer', cls:'primary', pop:true },
-  { label:'Navigator', price:99, feat:['All marketing tools','Content Studio','Keywords + Lead Magnets','CSV exports'], cta:'launch nav', cls:'' },
-  { label:'Thinker', price:299, feat:['Everything in Navigator','Unified Inbox — all channels','Full command center'], cta:'full power', cls:'spectrum' }
+  { label:'Navigator', price:99, feat:['All marketing tools','Content Studio','Keywords + Lead Magnets','CSV exports'], cta:'Launch Nav', cls:'' },
+  { label:'Thinker', price:299, feat:['Everything in Navigator','Unified Inbox — all channels','Full command center'], cta:'Full Power', cls:'spectrum' }
 ];
 const pgrid = document.getElementById('plansGrid');
 if (pgrid) PLANS.forEach((p, i) => {
@@ -617,7 +726,7 @@ if (pgrid) PLANS.forEach((p, i) => {
   d.innerHTML =
     (p.pop ? '<span class="ribbon">Popular</span>' : '') +
     `<h4>${p.label}</h4><div class="price">$${p.price}<small>/mo</small></div><ul>${p.feat.map(f=>`<li>${f}</li>`).join('')}</ul>` +
-    `<a class="btn ${p.cls}" href="/dashboard">${p.cta === 'full power' ? '<span class="t">⚡ full power</span>' : p.cta}</a>`;
+    `<a class="btn ${p.cls}" href="/dashboard">${p.cta === 'Full Power' ? '<span class="t">⚡ ' + p.cta + '</span>' : p.cta}</a>`;
   pgrid.appendChild(d);
 });
 
@@ -705,6 +814,104 @@ if (mock && !reduced && window.matchMedia('(pointer: fine)').matches) {
     mock.style.transform = `perspective(1100px) rotateY(${rx.toFixed(2)}deg) rotateX(${ry.toFixed(2)}deg)`;
   });
   stage.addEventListener('pointerleave', () => { mock.style.transform = ''; });
+}
+
+// ---------- Ask AI live cards ----------
+const ASK = [
+  { ic: 'growth', name: 'Growth AI', sub: 'Campaign ideas that convert',
+    seed: 'Hey! Ask me for hooks, ad angles and campaign ideas — I run on the same model as your dashboard.',
+    prompts: ['5 hooks for a launch', 'Fix my ad copy', 'Cold DM opener'] },
+  { ic: 'studio', name: 'Content AI', sub: 'Captions, drafts, swipe files',
+    seed: 'Give me a brief — captions, SEO meta, swipe file — whatever you need shipped.',
+    prompts: ['Write a launch caption', '3 SEO titles', 'Intro for a client'] },
+  { ic: 'target', name: 'Funnel AI', sub: 'Pings your pipeline mood',
+    seed: 'Draft follow-ups, audit your funnel, plan next steps from here.',
+    prompts: ['Draft a follow-up', 'Audit my funnel', 'What do I ask next?'] }
+];
+const askGrid = document.getElementById('askGrid');
+if (askGrid) {
+  ASK.forEach((a) => {
+    const card = document.createElement('div');
+    card.className = 'ask-card reveal';
+    card.innerHTML =
+      `<div class="ask-head"><span class="ask-ic">${svg(a.ic)}</span><div><b>${a.name}</b><small>${a.sub}</small></div><span class="ask-dot"></span></div>` +
+      `<div class="ask-log"><div class="msg ai">${a.seed}</div></div>` +
+      `<div class="ask-chips">${a.prompts.map(p => `<button type="button">${p}</button>`).join('')}</div>` +
+      `<div class="ask-input"><input maxlength="2000" placeholder="Ask ${a.name}…" aria-label="Message ${a.name}"><button type="button" aria-label="Send">↑</button></div>`;
+    askGrid.appendChild(card);
+    const log = card.querySelector('.ask-log');
+    const input = card.querySelector('input');
+    const btn = card.querySelector('button');
+    let busy = false; let ctrl = null;
+    const push = (text, who) => {
+      const d = document.createElement('div');
+      d.className = 'msg ' + who;
+      d.textContent = text;
+      log.appendChild(d); log.scrollTop = log.scrollHeight;
+      return d;
+    };
+    const send = async (raw) => {
+      const text = (raw || '').trim();
+      if (busy || !text) return;
+      push(text, 'me'); input.value = '';
+      if (ctrl) ctrl.abort(); ctrl = new AbortController();
+      const typer = document.createElement('div');
+      typer.className = 'msg ai'; typer.innerHTML = '<span class="tdots"><i></i><i></i><i></i></span>';
+      log.appendChild(typer); log.scrollTop = log.scrollHeight;
+      busy = true; btn.disabled = true;
+      try {
+        const r = await fetch('/api/chat', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ message: text }), signal: ctrl.signal
+        });
+        const j = await r.json().catch(() => ({}));
+        typer.remove();
+        if (!r.ok) {
+          push(r.status === 429 ? 'Nice pace! The free preview caps calls for a minute — then you can ask again, or hop into the dashboard for the full engine.' : 'The model hiccuped. Free previews are rate-limited — your paid plan unlocks the full engine.', 'ai');
+          return;
+        }
+        push(j.reply || 'No response from AI.', 'ai');
+      } catch (e) {
+        typer.remove();
+        if (e && e.name !== 'AbortError') push('Network blip — try again in a second.', 'ai');
+      } finally { busy = false; btn.disabled = false; }
+    };
+    btn.addEventListener('click', () => send(input.value));
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(input.value); });
+    card.querySelectorAll('.ask-chips button').forEach((c) => c.addEventListener('click', () => send(c.textContent)));
+  });
+}
+
+// ---------- header hover glyphs (website only) ----------
+const hdrFx = document.getElementById('hdrFx');
+if (hdrFx && window.matchMedia('(hover: hover) and (pointer: fine)').matches && document.documentElement.dataset.motion !== 'off') {
+  const GLYPHS = ['✦', '✧', '◆', '●', '✶', '▲', '✦', '✺'];
+  const COLS = ['#22d3ee', '#e879f9', '#0BD97E', '#F4C63D', '#a855f7', '#f472b6'];
+  let last = 0;
+  const spawn = (x, y) => {
+    if (hdrFx.children.length > 24) return;
+    const g = document.createElement('span');
+    g.className = 'hdrGlyph';
+    g.textContent = GLYPHS[(Math.random() * GLYPHS.length) | 0];
+    g.style.left = x + 'px'; g.style.top = y + 'px';
+    g.style.color = COLS[(Math.random() * COLS.length) | 0];
+    g.style.fontSize = (9 + Math.random() * 9).toFixed(1) + 'px';
+    hdrFx.appendChild(g);
+    g.animate([
+      { transform: 'translate(0,0) rotate(0deg)', opacity: 0 },
+      { opacity: 1, offset: .18 },
+      { transform: `translate(${(30 + Math.random() * 30).toFixed(0)}px, ${(-44 - Math.random() * 44).toFixed(0)}px) rotate(${(140 + Math.random() * 140).toFixed(0)}deg)`, opacity: 0 }
+    ], { duration: 800 + Math.random() * 500, easing: 'cubic-bezier(.22,1,.36,1)' }).onfinish = () => g.remove();
+  };
+  const hdr = hdrFx.closest('header');
+  hdr.addEventListener('pointermove', (e) => {
+    const r = hdrFx.getBoundingClientRect();
+    const n = performance.now();
+    if (n - last < 100) return; last = n;
+    if (e.clientY < r.top || e.clientY > r.bottom) return;
+    spawn(e.clientX - r.left + (Math.random() * 24 - 12), e.clientY - r.top + (Math.random() * 14 - 7));
+  });
+  hdr.addEventListener('pointerleave', () => { while (hdrFx.firstChild) hdrFx.firstChild.remove(); });
 }
 
 // ---------- nebula starfield canvas (cosmos section) ----------
