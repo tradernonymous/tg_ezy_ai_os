@@ -36,6 +36,7 @@ import { verifyMagicToken, requestMagicToken, emailConfigured } from "./magic";
 import { createCheckout, confirmSession, handleStripeWebhook, recordUsdtPending, verifyStripeSignature } from "./billing";
 import { mapLegacy, tierIndex, TIERS, PLANS } from "./plans";
 import { gateFor } from "./toolGates";
+import { channelStatus, channelSummary } from "./channels";
 
 dotenv.config();
 
@@ -642,6 +643,12 @@ app.post("/api/conversations/:id/reply", requireAuth, (req, res) => {
 });
 
 // Inbox summary — available down to free (badge on overview), Thinker for the full inbox.
+// Which inbox channels are wired up, and what each still needs. Returns only
+// the NAMES of missing env vars, never their values.
+app.get("/api/channels", requireAuth, (_req, res) => {
+  res.json({ channels: channelStatus(), summary: channelSummary() });
+});
+
 app.get("/api/inbox", requireAuth, (_req, res) => {
   try {
     const account = (_req as any).account as Account;
