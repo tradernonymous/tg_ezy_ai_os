@@ -176,6 +176,53 @@ app.get("/dashboard", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "public", "dashboard.html"));
 });
 
+// ---------- Crawler + AI-answer-engine surface ----------
+// Built from the request host so a custom domain works without a redeploy.
+function siteOrigin(req: any): string {
+  const proto = String(req.headers["x-forwarded-proto"] || req.protocol || "https").split(",")[0];
+  const host = String(req.headers["x-forwarded-host"] || req.headers.host || "");
+  return `${proto}://${host}`;
+}
+
+app.get("/robots.txt", (req, res) => {
+  const origin = siteOrigin(req);
+  res.type("text/plain").send(
+    [
+      "User-agent: *",
+      "Allow: /",
+      "Disallow: /dashboard",
+      "Disallow: /login",
+      "Disallow: /api/",
+      "",
+      `Sitemap: ${origin}/sitemap.xml`,
+      "",
+    ].join("\n"),
+  );
+});
+
+app.get("/sitemap.xml", (req, res) => {
+  const origin = siteOrigin(req);
+  const today = new Date().toISOString().slice(0, 10);
+  const urls = [
+    { loc: `${origin}/home`, priority: "1.0", freq: "weekly" },
+    { loc: `${origin}/`, priority: "0.8", freq: "weekly" },
+  ];
+  const body = urls
+    .map(
+      (u) =>
+        `  <url><loc>${u.loc}</loc><lastmod>${today}</lastmod>` +
+        `<changefreq>${u.freq}</changefreq><priority>${u.priority}</priority></url>`,
+    )
+    .join("\n");
+  res
+    .type("application/xml")
+    .send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${body}
+</urlset>
+`);
+});
+
 app.get("/discord", (_req, res) => {
   res.status(404).json({ error: "not implemented" });
 });
