@@ -56,6 +56,14 @@ Every tool works **two ways**: tap a button *or* type a command. Results come wi
 - ⚠️ **Leads At Risk** (stuck > 3 days) with **Reply / Bump stage** actions + animated stage distribution.
 - ✨ **System UX** — toasts, styled confirm dialog, skeleton loaders, empty/error states with CTAs, focus-visible rings, ARIA labels, `Esc` closes overlays, auto-refresh every 20s.
 
+### 🛸 Landing page (neon redesign, served at `/home`)
+- **Full neon brand theme** — green/gold viral-radar mark (`img/EzyViralAi-mark-color.svg`) wired into the landing, sign-in page, dashboard sidebar and favicon.
+- **Hero** — problem → solution framing with the Marketer package chips (Content Review · Growth Prompts · Swipe Files · Value Map · Lead Magnets), a glowing animated product mock and count-up stats.
+- **Unified Inbox centerpiece** — outer-space showpiece: starfield canvases, orbit rings, scan beam, shooting stars and orbiting channel satellites, with the "most-requested — and most expensive" half-price claim.
+- **Funnel wiring** — scroll-progress bar, sticky header CTA, floating "Jump in" pill, every section CTA funnels to `/dashboard`, section reveals via IntersectionObserver.
+- **Pricing CTAs** — Hobby **"Let me try"** · Navigator **"launch nav"** · Thinker **"full power"** (animated spectrum gradient) · Marketer **"Go Marketer"** (Popular).
+- 🛡️ **Motion** — `✦` toggle + `prefers-reduced-motion`; canvases/animations skip under reduced motion and on coarse pointers. Fully responsive (tablet + phone, `env(safe-area-inset)`).
+
 ---
 
 ## 🚀 Quick start
@@ -209,9 +217,10 @@ src/
   aiProvider.ts   # Mistral client — timeout, retries, backoff
   __tests__/      # Unit tests (node:test) for plans, session, accounts, stores, inbox
 public/
-  index.html      # Public landing page (served at /home)
+  index.html      # Public landing page (served at /home) — neon theme, unified-inbox showpiece
   login.html      # Sign-in: Google · Telegram · Magic Key
   dashboard.html  # Attio-style dashboard incl. inbox thread view + plans modal
+  img/            # Brand assets (EzyViralAi-mark-color.svg, served at /img)
 db/
   accounts.json   # Account workspaces + plans (created on first sign-in)
   leads.json      # Lead records (account-scoped)
