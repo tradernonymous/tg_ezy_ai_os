@@ -77,8 +77,28 @@ app.post("/api/billing/webhook", express.raw({ type: () => true, limit: "2mb" })
 
 app.use(express.json({ limit: "100kb" }));
 
+// ---------- Security headers ----------
+app.use((req, res, next) => {
+  res.header("X-Content-Type-Options", "nosniff");
+  res.header("X-Frame-Options", "DENY");
+  res.header("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.header("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+  // Fly terminates TLS and force_https is on, so HSTS is safe to assert there.
+  if (process.env.NODE_ENV === "production" || process.env.FLY_APP_NAME) {
+    res.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  next();
+});
+
 // Static brand assets (logo, favicon)
-app.use("/img", express.static(path.join(__dirname, "..", "public", "img")));
+app.use(
+  "/img",
+  express.static(path.join(__dirname, "..", "public", "img"), {
+    maxAge: "7d",
+    etag: true,
+    lastModified: true,
+  }),
+);
 
 // ---------- CORS ----------
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
