@@ -45,7 +45,7 @@ Every tool works **two ways**: tap a button *or* type a command. Results come wi
 - 🧭 Persistent sidebar: Overview · Pipeline · Leads · **Inbox** · Ask AI · Marketing Tools.
 - 📬 **Unified Inbox view** — channel pills, conversation list, thread pane, brand composer wired to the reply API.
 - 🏗️ **Kanban pipeline board** — move leads between stages inline.
-- 📂 Leads table with initials avatars, **channel chips**, **deal value**, stage chips, created/updated.
+- 📂 Leads table with initials avatars, **channel chips**, **deal value**, stage chips, created/updated — plus **➕ Add / ✏️ Edit / 🗑️ Delete** via modal (`POST`/`PATCH`/`DELETE /api/leads`).
 - 💰 Metrics: total leads, AI conversations, plan, **pipeline value**, **unread per channel**.
 - ⚠️ **Leads At Risk** (stuck > 3 days) + doughnut chart, auto-refresh every 10s.
 
@@ -75,9 +75,11 @@ The bot prints **"Bot started"** and the API is at `http://localhost:3000` → d
 
 ### Test it end-to-end (5 min)
 1. Message your bot `/start`, then `/plans` → **Claim free trial** → PRO unlocks.
-2. `➕ Add Lead` → name → stage. Check it in the dashboard.
+2. `➕ Add Lead` → name → stage. Or add directly from the dashboard (**Leads → ➕ Add Lead**).
 3. Tap **📬 Inbox** (or `/inbox`) → open a conversation → reply → a simulated follow-up arrives in ~20–45s.
-4. Open `http://localhost:3000/dashboard` → **Inbox** → select a thread → send a reply.
+4. Open the dashboard → **Inbox** → select a thread → send a reply. Then **Leads** → **➕ Add Lead / ✏️ Edit / 🗑️ Delete** to manage records.
+
+> 🟢 Live demo: the project is deployed at <https://tg-ezy-ai-os-young-blossom-4821.fly.dev/dashboard> (Bot + API + dashboard in one container, data on a Fly volume).
 
 ---
 
@@ -205,14 +207,19 @@ Single image runs **both** bot and API; `/health` drives machine checks.
 # local
 docker build -t tg-ezy-ai-os .
 
-# fly.io
-fly launch --copy-config --name tg-ezy-ai-os   # creates the app from fly.toml
-fly secrets set BOT_TOKEN=... MISTRAL_API_KEY=... ADMIN_TELEGRAM_ID=... PRO_ACCESS_IDS=...
+# fly.io (first time — creates the app from fly.toml)
+fly launch --copy-config --name <your-app-name>
+fly secrets set "BOT_TOKEN=..." "MISTRAL_API_KEY=..." "ADMIN_TELEGRAM_ID=..." "PRO_ACCESS_IDS=..."
+fly deploy
+
+# after every code change, redeploy (builds from source inside the container):
 fly deploy
 
 # persist data on a volume (attached automatically via fly.toml mount)
-# set PUBLIC_URL=https://tg-ezy-ai-os.fly.dev in env/secret
+# then set PUBLIC_URL=https://<your-app-name>.fly.dev so bot links point to the live app
 ```
+
+> Reminder: `fly deploy` rebuilds from the committed source — the dashboard lives in `public/` and is baked into the image, so redeploy is all that's needed to ship dashboard UI changes.
 
 CI (`.github/workflows/ci.yml`) runs **type-check + tests** on every push/PR to `main`. No API keys needed to build or test.
 
