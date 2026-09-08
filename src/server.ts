@@ -174,7 +174,10 @@ app.post("/api/auth/google", async (req, res) => {
     const claims: Record<string, any> = await r.json();
     const clientId = process.env.GOOGLE_CLIENT_ID;
     if (clientId && claims.aud !== clientId) return res.status(401).json({ error: "Wrong audience" });
-    if (claims.email_verified !== true) return res.status(401).json({ error: "Unverified email" });
+    // tokeninfo returns email_verified as string "true"; GSI JWTs use boolean true.
+    if (!(claims.email_verified === true || claims.email_verified === "true" || claims.email_verified === 1)) {
+      return res.status(401).json({ error: "Unverified email" });
+    }
 
     const sub = String(claims.sub);
     let account = getAccountByProviderKey("google", sub);
