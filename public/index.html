@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-build="aios-r2">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EzyViral OS — Your marketing command center</title>
 <meta name="description" content="Leads, pipeline, AI marketing tools and a unified inbox in one neon-lit account. Free to start. Built for solopreneurs who ship.">
@@ -289,6 +292,10 @@
     -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude;
     animation: borderHue 5s linear infinite; }
   @keyframes borderHue { to { filter: hue-rotate(360deg); } }
+  .plan.pop::after { content: ''; position: absolute; inset: -8%; z-index: -2; border-radius: 32px;
+    background: radial-gradient(closest-side, rgba(232,121,249,.22), rgba(34,211,238,.08) 55%, transparent);
+    animation: popBreathe 4s ease-in-out infinite; pointer-events: none; }
+  @keyframes popBreathe { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
   .plan.pop .price { font-size: 28px; }
   .plan.pop .price small { color: var(--text-2); }
   .plan.pop h4 { font-size: 16px; }
@@ -328,6 +335,8 @@
   footer { border-top: 1px solid var(--border); padding: 34px 0 90px; color: var(--text-3); font-size: 12.5px;
     display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; position: relative; z-index: 1; }
   footer .brand img { height: 26px; }
+  .build-stamp { font-size: 10px; letter-spacing: 1.2px; color: var(--text-3); opacity: .55; border: 1px solid var(--border);
+    padding: 2px 8px; border-radius: 99px; }
 
   /* ---------- journey route (railway-style spine) ---------- */
   #route { position: absolute; left: 50%; top: 76px; bottom: 96px; width: 2px; z-index: 0; pointer-events: none;
@@ -388,11 +397,21 @@
   @media (min-width: 1081px) { #askai { display: none; } }
 
   .tool-chat { cursor: pointer; }
-  .tool-chat .try { position: absolute; top: 16px; right: 16px; font-size: 10px; font-weight: 800; letter-spacing: 1px;
+  .tool-chat .try { position: absolute; top: 16px; right: 16px; font-size: 10px; font-weight: 800; letter-spacing: .6px;
     text-transform: uppercase; color: var(--green); border: 1px solid rgba(11,217,126,.5); background: rgba(11,217,126,.08);
-    padding: 4px 9px; border-radius: 999px; animation: pulse 2s infinite; }
-  .tool-chat:hover { border-color: var(--green); }
+    padding: 5px 11px; border-radius: 999px; animation: pulse 2.2s infinite; display: inline-flex; align-items: center; gap: 5px; }
+  .tool-chat .try::before { content: '💬'; font-size: 11px; line-height: 1; }
+  .tool-chat:hover { border-color: var(--green); box-shadow: 0 0 26px rgba(11,217,126,.18); }
   .tool-chat .ic svg { color: var(--green); }
+  .tool-chat:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+  .tool-chat.is-chat-open { border-color: var(--cyan); box-shadow: 0 0 30px rgba(34,211,238,.22); }
+
+  /* header chat button */
+  .nav-links .askai-link { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: 13.5px; color: var(--green);
+    border: 1px solid rgba(11,217,126,.45); background: rgba(11,217,126,.08); padding: 8px 15px; border-radius: 999px;
+    transition: var(--tr-smooth); }
+  .nav-links .askai-link:hover { background: rgba(11,217,126,.16); box-shadow: 0 6px 22px rgba(11,217,126,.28); color: var(--text); border-color: var(--green); }
+  .nav-links .askai-link svg { width: 15px; height: 15px; flex-shrink: 0; }
 
   /* Ask AI chat modal (desktop) */
   .ai-backdrop { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 20px;
@@ -477,7 +496,7 @@
         <a href="#band">Problem</a>
         <a href="#inbox">Unified Inbox</a>
         <a href="#flow">Workflow</a>
-        <a href="#askai">Ask AI</a>
+        <a class="askai-link" href="#askai" aria-label="Open Ask AI chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/></svg>Ask AI</a>
         <a href="#pricing">Pricing</a>
         <label class="motion-toggle" title="Toggle motion">
           <input type="checkbox" id="motionToggle" checked><span id="motionFace">✦</span>
@@ -681,6 +700,7 @@
   <div class="wrap" style="width:100%;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
     <span class="brand" style="gap:8px;font-size:14px;"><img src="/img/EzyViralAi-mark-color.svg" alt=""> © 2026 EzyViral OS</span>
     <span>Built for solopreneurs who ship · Leads → pipeline → inbox → closed</span>
+    <span class="build-stamp" title="Deployment build id">v2</span>
   </div>
 </footer>
 
@@ -1035,14 +1055,30 @@ if (aiModal) {
 
 // ---------- Ask AI entry points: arsenal card + nav link ----------
 if (grid) {
-  grid.addEventListener('click', (e) => {
-    const card = e.target.closest('[data-chat]');
-    if (!card) return;
+  const chatCards = () => grid.querySelectorAll('[data-chat]');
+  const activateChatCard = (card) => {
     if (window.matchMedia('(max-width: 1080px)').matches) {
       const sec = document.getElementById('askai');
       if (sec) sec.scrollIntoView({ behavior: 'smooth' });
-    } else if (typeof window.evosOpenAI === 'function') {
+      return;
+    }
+    if (typeof window.evosOpenAI === 'function') {
+      card.classList.add('is-chat-open');
       window.evosOpenAI();
+      setTimeout(() => card.classList.remove('is-chat-open'), 650);
+    }
+  };
+  grid.addEventListener('click', (e) => {
+    const card = e.target.closest('[data-chat]');
+    if (!card) return;
+    activateChatCard(card);
+  });
+  grid.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      const card = e.target.closest && e.target.closest('[data-chat]');
+      if (!card) return;
+      e.preventDefault();
+      activateChatCard(card);
     }
   });
 }
