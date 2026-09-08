@@ -573,7 +573,8 @@
     .tool.tool-chat .tt { margin-top: 0; }
     .tool.tool-chat h4 { font-size: 18px; }
     .tool.tool-chat p { font-size: 13.5px; max-width: 720px; }
-    .tool.tool-chat .try { margin-top: 0; align-self: center; margin-left: auto; padding: 11px 20px; font-size: 12px; }
+    .tools .tool.tool-chat .try { margin-top: 0; align-self: center; margin-left: auto;
+      height: 56px; padding: 0 26px; font-size: 12.5px; }
   }
 
   /* Small-screen Ask AI entry: full-width button with a colourful animated fill. */
@@ -590,10 +591,16 @@
   .tool.tool-chat { cursor: pointer; }
   .tool.tool-chat .try { margin-top: auto; align-self: flex-start; font-size: 11px; font-weight: 800; letter-spacing: .4px;
     text-transform: uppercase; color: var(--green); border: 1px solid rgba(11,217,126,.5); background: rgba(11,217,126,.08);
-    padding: 7px 13px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;
-    cursor: pointer; white-space: nowrap; transition: var(--tr-smooth);
+    height: 40px; padding: 0 18px; border-radius: 999px; display: inline-flex; align-items: center;
+    justify-content: center; gap: 7px; cursor: pointer; white-space: nowrap;
+    transition: border-color var(--tr-smooth), color var(--tr-smooth), transform var(--tr-smooth);
     background-image: linear-gradient(90deg, rgba(11,217,126,.18), rgba(34,211,238,.18), rgba(232,121,249,.18), rgba(11,217,126,.18));
-    background-size: 300% 100%; animation: specShift 5s linear infinite; }
+    background-size: 300% 100%; animation: specShift 5s linear infinite, tryGlow 2.8s ease-in-out infinite; }
+  /* Glow pulse — brand green into cyan, kept soft enough not to dominate the card. */
+  @keyframes tryGlow {
+    0%, 100% { box-shadow: 0 0 10px rgba(11,217,126,.30), 0 0 22px rgba(11,217,126,.14); }
+    50%      { box-shadow: 0 0 20px rgba(11,217,126,.70), 0 0 44px rgba(34,211,238,.42); }
+  }
   .tool.tool-chat:hover .try, .tool.tool-chat .try:hover { color: var(--text); border-color: var(--green); transform: translateY(-1px); }
   .tool.tool-chat .try::before { content: '💬'; font-size: 11px; line-height: 1; }
   .tool.tool-chat:hover { border-color: var(--green); box-shadow: 0 0 26px rgba(11,217,126,.18); }
