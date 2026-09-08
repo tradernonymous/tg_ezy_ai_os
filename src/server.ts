@@ -48,7 +48,15 @@ app.post("/api/billing/webhook", express.raw({ type: () => true, limit: "2mb" })
   try {
     const raw = Buffer.isBuffer(req.body) ? req.body.toString("utf-8") : String(req.body || "");
     const secret = process.env.STRIPE_WEBHOOK_SECRET;
-    if (secret && !verifyStripeSignature(raw, String(req.headers["stripe-signature"] || ""), secret)) {
+    // Fail closed. This endpoint grants paid plans, so an unverified request is
+    // a free account upgrade for anyone who can POST JSON. Refuse to process at
+    // all until a webhook secret is configured.
+    if (!secret) {
+      console.error("[billing] webhook rejected: STRIPE_WEBHOOK_SECRET is not configured");
+      res.status(503).json({ error: "Webhook not configured" });
+      return;
+    }
+    if (!verifyStripeSignature(raw, String(req.headers["stripe-signature"] || ""), secret)) {
       res.status(401).json({ error: "Invalid signature" });
       return;
     }

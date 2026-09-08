@@ -85,23 +85,23 @@ function newId(): string {
   return `c_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function isoOrUndefined(value: any): string | undefined {
+function isoOrUndefined(value: unknown): string | undefined {
   if (value === undefined || value === null || value === '') return undefined;
-  const d = new Date(value);
+  const d = new Date(value as string | number | Date);
   return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
 }
 
-function sanitizeKind(value: any): ContentKind {
+function sanitizeKind(value: unknown): ContentKind {
   const k = String(value ?? '').toLowerCase();
   return (CONTENT_KINDS as string[]).includes(k) ? (k as ContentKind) : 'copy';
 }
 
-function sanitizeTags(value: any): string[] | undefined {
+function sanitizeTags(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) return undefined;
-  return value.map((t: any) => String(t).slice(0, 40)).filter(Boolean).slice(0, 20);
+  return value.map((t: unknown) => String(t).slice(0, 40)).filter(Boolean).slice(0, 20);
 }
 
-function sanitize(patches: any): ContentPatch {
+function sanitize(patches: ContentInput): ContentPatch {
   const out: ContentPatch = {};
   if (patches?.title !== undefined) out.title = String(patches.title).slice(0, 200);
   if (patches?.body !== undefined) out.body = String(patches.body).slice(0, 20000);
@@ -150,15 +150,19 @@ export async function getContent(id: string): Promise<ContentItem | undefined> {
   return readJson().find((c) => c.id === id);
 }
 
-export async function addContent(input: {
+// Untrusted shape from an HTTP body or the bot; every field is narrowed on the
+// way in rather than trusted.
+export type ContentInput = {
   accountId?: string;
-  kind?: any;
-  title?: any;
-  body?: any;
-  platform?: any;
-  tags?: any;
-  scheduledFor?: any;
-}): Promise<ContentItem> {
+  kind?: unknown;
+  title?: unknown;
+  body?: unknown;
+  platform?: unknown;
+  tags?: unknown;
+  scheduledFor?: unknown;
+};
+
+export async function addContent(input: ContentInput): Promise<ContentItem> {
   const now = new Date().toISOString();
   const item: ContentItem = {
     id: newId(),
@@ -183,7 +187,7 @@ export async function addContent(input: {
   return item;
 }
 
-export async function updateContent(id: string, patches: any, actor?: string): Promise<ContentItem | null> {
+export async function updateContent(id: string, patches: ContentInput, actor?: string): Promise<ContentItem | null> {
   const all = readJson();
   const item = all.find((c) => c.id === id);
   if (!item) return null;

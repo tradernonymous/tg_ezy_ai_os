@@ -8,11 +8,19 @@ function isProd(): boolean {
   return process.env.NODE_ENV === 'production' || !!process.env.FLY_APP_NAME;
 }
 
+// Generated once per process. Used only when SESSION_SECRET is unset: a random
+// value means sessions reset on restart, but a hardcoded fallback living in a
+// public repo would let anyone forge a session cookie for any account.
+const EPHEMERAL_SECRET = crypto.randomBytes(32).toString('hex');
+
 function secret(): string {
   const s = process.env.SESSION_SECRET;
   if (!s) {
-    console.warn('[session] SESSION_SECRET missing — using an ephemeral dev secret (sessions reset on restart).');
-    return 'dev-ephemeral-insecure-secret-change-me';
+    console.error(
+      '[session] SESSION_SECRET missing — falling back to a random per-boot secret. ' +
+        'Everyone is signed out on every restart or redeploy. Set SESSION_SECRET.',
+    );
+    return EPHEMERAL_SECRET;
   }
   if (s.length < 32) console.warn('[session] SESSION_SECRET is shorter than 32 chars — use a long random string.');
   return s;
@@ -35,7 +43,8 @@ export function verifySession(token: string | undefined | null): string | null {
     const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8'));
     if (!data || typeof data.uid !== 'string' || !data.exp || Number(data.exp) < Date.now()) return null;
     return data.uid;
-  } catch (e) {
+  } catch {
+    // Malformed or tampered cookie: treat as signed out.
     return null;
   }
 }

@@ -12,6 +12,8 @@ import {
   setContentStarred,
   deleteContent,
   clearContent,
+  type ContentStatus,
+  type ContentInput,
 } from '../contentStore';
 
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'tg-os-content-'));
@@ -102,7 +104,7 @@ test('contentStore: moving backwards records a reverted event, not an approval',
 
 test('contentStore: rejects an unknown status', async () => {
   const item = await addContent({ accountId: 'a1', title: 'x' });
-  const result = await setContentStatus(item.id, 'bogus' as any, 'a1');
+  const result = await setContentStatus(item.id, 'bogus' as unknown as ContentStatus, 'a1');
   assert.equal(result, null);
   assert.equal((await getContent(item.id))?.status, 'draft');
 });
@@ -117,7 +119,8 @@ test('contentStore: starred is independent of approved', async () => {
 
 test('contentStore: updateContent patches only known fields', async () => {
   const item = await addContent({ accountId: 'a1', title: 'old' });
-  const updated = await updateContent(item.id, { title: 'new', status: 'published' }, 'a1');
+  const rogue = { title: 'new', status: 'published' } as unknown as ContentInput;
+  const updated = await updateContent(item.id, rogue, 'a1');
   assert.equal(updated?.title, 'new');
   assert.equal(updated?.status, 'draft'); // status is not patchable here
 });

@@ -155,6 +155,8 @@ export async function handleWebhookSession(s: any): Promise<Account | null> {
   return activateAccount(accountId, tier);
 }
 
+export const STRIPE_SIGNATURE_TOLERANCE_S = 300;
+
 export function verifyStripeSignature(payload: string, sigHeader: string | undefined, secret: string | undefined): boolean {
   if (!secret) return true; // no webhook secret configured → rely on Stripe session retrieval for validation
   if (!sigHeader) return false;
@@ -167,6 +169,10 @@ export function verifyStripeSignature(payload: string, sigHeader: string | undef
   const ts = Number(parts['t']);
   const signature = parts['v1'];
   if (!ts || !signature) return false;
+  // Reject stale or future-dated events so a captured webhook cannot be replayed
+  // later to re-activate a plan. Stripe's own tolerance is five minutes.
+  const ageSeconds = Math.abs(Date.now() / 1000 - ts);
+  if (ageSeconds > STRIPE_SIGNATURE_TOLERANCE_S) return false;
   const expected = crypto.createHmac('sha256', secret).update(`${ts}.${payload}`).digest('hex');
   const a = Buffer.from(expected);
   const b = Buffer.from(signature);

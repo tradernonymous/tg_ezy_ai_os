@@ -146,3 +146,23 @@ test('billing: stripe signature verification', () => {
   assert.equal(verifyStripeSignature(payload, undefined, secret), false);
   assert.equal(verifyStripeSignature(payload, 'garbage', undefined), true, 'no secret → validation deferred to Stripe retrieval');
 });
+
+test('billing: stripe signature rejects replayed and future-dated events', () => {
+  const crypto = require('crypto') as typeof import('crypto');
+  const secret = 'whsec_test';
+  const payload = '{"type":"checkout.session.completed"}';
+  const sign = (ts: number) =>
+    crypto.createHmac('sha256', secret).update(`${ts}.${payload}`).digest('hex');
+
+  const now = Math.floor(Date.now() / 1000);
+  const stale = now - 3600; // captured an hour ago, then replayed
+  const future = now + 3600;
+  const recent = now - 120; // inside the five-minute tolerance
+
+  assert.equal(verifyStripeSignature(payload, `t=${stale},v1=${sign(stale)}`, secret), false,
+    'an hour-old signature must not be accepted');
+  assert.equal(verifyStripeSignature(payload, `t=${future},v1=${sign(future)}`, secret), false,
+    'future-dated signature must not be accepted');
+  assert.equal(verifyStripeSignature(payload, `t=${recent},v1=${sign(recent)}`, secret), true,
+    'recent signature stays valid');
+});
