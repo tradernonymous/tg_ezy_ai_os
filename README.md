@@ -60,9 +60,12 @@ Every tool works **two ways**: tap a button *or* type a command. Results come wi
 - **Full neon brand theme** — green/gold viral-radar mark (`img/EzyViralAi-mark-color.svg`) wired into the landing, sign-in page, dashboard sidebar and favicon.
 - **Hero** — problem → solution framing with the Marketer package chips (Content Review · Growth Prompts · Swipe Files · Value Map · Lead Magnets), a glowing animated product mock and count-up stats.
 - **Unified Inbox centerpiece** — outer-space showpiece: starfield canvases, orbit rings, scan beam, shooting stars and orbiting channel satellites, with the "most-requested — and most expensive" half-price claim.
-- **Funnel wiring** — scroll-progress bar, sticky header CTA, floating "Jump in" pill, every section CTA funnels to `/dashboard`, section reveals via IntersectionObserver.
-- **Pricing CTAs** — Hobby **"Let me try"** · Navigator **"launch nav"** · Thinker **"full power"** (animated spectrum gradient) · Marketer **"Go Marketer"** (Popular).
-- 🛡️ **Motion** — `✦` toggle + `prefers-reduced-motion`; canvases/animations skip under reduced motion and on coarse pointers. Fully responsive (tablet + phone, `env(safe-area-inset)`).
+- **Ask AI, live on the page** — the arsenal's **Ask AI** tool opens a chat modal on desktop (nav link too), and a 3-card chat section on mobile/tablet. Growth / Content / Funnel personas, quick-prompt chips, typing indicator; the backend feeds it a **product knowledge base** so it can browse features, plans and pricing (see `/api/chat`).
+- **Journey route** — railway-style dashed spine + traveling light with pulsing station nodes on each section and a gold arrival node at the final CTA (hidden below desktop).
+- **Radiant Marketer card** — scaled, floating, animated conic-gradient border vs. the other tiers.
+- **Funnel wiring** — scroll-progress bar, sticky header CTA, floating "Jump in" pill, every section CTA funnels to `/dashboard`, section reveals via IntersectionObserver, moving glyphs on header hover (desktop only).
+- **Pricing CTAs (Start Case)** — Free **Start Free** · Hobby **Let Me Try** · Navigator **Launch Nav** · Thinker **Full Power** (animated spectrum gradient) · Marketer **Go Marketer** (Popular, glow-pulsing primary buttons throughout).
+- 🛡️ **Motion** — `✦` toggle + `prefers-reduced-motion`; canvases/animations skip under reduced motion and on coarse pointers. Contrast-audited text tokens (`--text-2/#c6c0e8`, `--text-3/#a09ac8`) plus rainbow animated key figures. Fully responsive (tablet + phone, `env(safe-area-inset)`).
 
 ---
 
@@ -147,7 +150,7 @@ The bot prints **"Bot started"** and the API is at `http://localhost:3000` → s
 | `PATCH` | `/api/leads/:id` | Update fields (validated + clamped, account-scoped) |
 | `DELETE` | `/api/leads/:id` | Delete lead (account-scoped) |
 | `GET` | `/api/stats` | `{ total, byStage, byChannel, pipelineValue, closedValue, plan, aiCount, inbox }` |
-| `POST` | `/api/chat` | AI chat `{ message }` → `{ reply }` (rate-limited) |
+| `POST` | `/api/chat` | AI chat `{ message, persona? }` → `{ reply }` (rate-limited, product knowledge base baked in) |
 | `POST` | `/api/tools/:id` | Run a tool — server-side gated by tier (403 `{ type:"upgrade" }` if locked) |
 | `GET` | `/api/conversations` | Inbox threads, **Thinker-gated**, account-scoped (`?channel=…`) |
 | `GET` | `/api/conversations/:id` | Full thread (account-scoped) |
