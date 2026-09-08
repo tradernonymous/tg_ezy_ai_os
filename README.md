@@ -8,7 +8,6 @@
   <img src="https://img.shields.io/badge/ai-Mistral%20Free-orange?style=flat-square" alt="Mistral" />
   <img src="https://img.shields.io/badge/lang-TypeScript-3178C6?style=flat-square&logo=typescript" alt="TypeScript" />
   <img src="https://img.shields.io/badge/db-JSON%20Store-005C5C?style=flat-square" alt="JSON store" />
-  <img src="https://img.shields.io/github/actions/workflow/status/tradernonymous/tg_ezy_ai_os/ci.yml?style=flat-square&label=CI" alt="CI" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT license" />
 </p>
 
