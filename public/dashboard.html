@@ -190,6 +190,40 @@
     .chat-input-row input { flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-2); background: var(--panel-2); color: var(--text); font-family: inherit; font-size: 13px; outline: none; }
     .chat-input-row input:focus { border-color: var(--accent); }
 
+    /* ---------- Inbox ---------- */
+    .inbox-layout { display: grid; grid-template-columns: 320px 1fr; gap: 14px; min-height: 480px; }
+    .channel-pills { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .pill { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border-2); background: transparent; color: var(--muted); cursor: pointer; font-family: inherit; }
+    .pill:hover { color: var(--text); border-color: var(--accent); }
+    .pill.active { background: var(--accent-soft); color: var(--text); border-color: rgba(79,109,245,0.4); }
+    .conv-list { border-right: 1px solid var(--border); display: flex; flex-direction: column; max-height: 520px; overflow-y: auto; }
+    .conv-item {
+      display: flex; gap: 10px; padding: 12px 14px; border-bottom: 1px solid rgba(30,32,41,0.7);
+      cursor: pointer; align-items: flex-start; background: transparent; border-left: 2px solid transparent; text-align: left; width: 100%; font-family: inherit; color: var(--text);
+    }
+    .conv-item:hover { background: rgba(255,255,255,0.02); }
+    .conv-item.active { background: var(--accent-soft); border-left-color: var(--accent); }
+    .conv-item .conv-info { flex: 1; min-width: 0; }
+    .conv-item .conv-name { font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+    .conv-item .conv-preview { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+    .conv-item .conv-when { font-size: 10px; color: var(--muted-2); margin-top: 4px; }
+    .unread-count { background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; border-radius: 999px; padding: 1px 7px; flex-shrink: 0; }
+    .channel-chip { font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,0.07); color: var(--muted); border: 1px solid var(--border-2); }
+    .thread { display: flex; flex-direction: column; max-height: 560px; }
+    .thread-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+    .thread-head .thread-title { font-weight: 600; font-size: 14px; }
+    .thread-head .thread-sub { font-size: 12px; color: var(--muted); }
+    .thread-messages { flex: 1; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; }
+    .tmsg { max-width: 78%; padding: 9px 13px; border-radius: 12px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+    .tmsg.customer { align-self: flex-start; background: var(--panel-2); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+    .tmsg.agent { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+    .tmsg.system { align-self: center; font-size: 11px; color: var(--muted-2); background: transparent; }
+    .tmsg .twho { font-size: 10px; opacity: 0.75; margin-bottom: 3px; }
+    .thread-composer { display: flex; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--border); }
+    .thread-composer input { flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-2); background: var(--panel-2); color: var(--text); font-family: inherit; font-size: 13px; outline: none; }
+    .thread-composer input:focus { border-color: var(--accent); }
+    .thread-empty { display: grid; place-items: center; color: var(--muted-2); font-size: 13px; height: 100%; }
+
     /* ---------- Tools grid ---------- */
     .tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
     .tool-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; cursor: pointer; transition: border-color 0.12s ease; color: var(--text); }
@@ -243,6 +277,7 @@
         <button class="nav-item active" data-view="overview"><span class="emoji">📊</span> Overview</button>
         <button class="nav-item" data-view="pipeline"><span class="emoji">📈</span> Pipeline</button>
         <button class="nav-item" data-view="leads"><span class="emoji">📂</span> Leads <span class="badge" id="leadCountBadge">0</span></button>
+        <button class="nav-item" data-view="inbox"><span class="emoji">📬</span> Inbox <span class="badge" id="inboxBadge">0</span></button>
         <button class="nav-item" data-view="ai"><span class="emoji">💬</span> Ask AI</button>
         <div class="nav-label">Create</div>
         <button class="nav-item" data-view="tools"><span class="emoji">🧰</span> Marketing Tools</button>
@@ -257,7 +292,7 @@
           <div class="features" id="planFeatures">Leads, Stats, Plan, Persona, Meta, Value, Review, Growth, Swipe, Workflow</div>
           <a href="#" class="btn primary" style="margin-top:12px;" onclick="openPlans(); return false;">💳 Upgrade</a>
         </div>
-        <a href="https://github.com/printezy247/tg_ezy_ai_os" target="_blank" class="btn">GitHub ↗</a>
+        <a href="https://github.com/tradernonymous/tg_ezy_ai_os" target="_blank" class="btn">GitHub ↗</a>
       </div>
     </aside>
 
@@ -297,6 +332,16 @@
             <div class="value" id="mPlan">FREE</div>
             <div class="delta" id="mPlanDelta">Subscription tier</div>
           </div>
+          <div class="metric">
+            <div class="label">Pipeline Value</div>
+            <div class="value" id="mValue">$0</div>
+            <div class="delta" id="mValueDelta">Closed $0</div>
+          </div>
+          <div class="metric">
+            <div class="label">Unified Inbox</div>
+            <div class="value" id="mInbox">0</div>
+            <div class="chips" id="mInboxChips"></div>
+          </div>
         </div>
 
         <div class="grid-2full">
@@ -314,8 +359,8 @@
           <div class="panel-head"><h2>📂 Recent Leads</h2><span class="sub">Latest 8</span></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Name</th><th>Stage</th><th>Telegram ID</th><th>Created</th><th>Updated</th></tr></thead>
-              <tbody id="recentTable"><tr><td colspan="5" class="empty">No leads yet.</td></tr></tbody>
+              <thead><tr><th>Name</th><th>Channel</th><th>Stage</th><th>Value</th><th>Telegram ID</th><th>Created</th><th>Updated</th></tr></thead>
+              <tbody id="recentTable"><tr><td colspan="7" class="empty">No leads yet.</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -335,8 +380,8 @@
           <div class="panel-head"><h2>📂 All Leads</h2><span class="sub" id="leadsSub">0 records</span></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Name</th><th>Stage</th><th>Telegram ID</th><th>Created</th><th>Updated</th><th>Action</th></tr></thead>
-              <tbody id="leadsTable"><tr><td colspan="6" class="empty">No leads yet.</td></tr></tbody>
+              <thead><tr><th>Name</th><th>Channel</th><th>Stage</th><th>Value</th><th>Telegram ID</th><th>Created</th><th>Updated</th><th>Action</th></tr></thead>
+              <tbody id="leadsTable"><tr><td colspan="8" class="empty">No leads yet.</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -374,6 +419,20 @@
         </div>
       </section>
 
+      <!-- Inbox (Unified multi-platform) -->
+      <section class="view" id="view-inbox">
+        <div class="panel">
+          <div class="panel-head"><h2>📬 Unified Inbox</h2><span class="sub">Email · WhatsApp · Telegram · TikTok · Meta — one inbox</span></div>
+          <div class="channel-pills" id="channelPills"></div>
+          <div class="inbox-layout">
+            <div class="conv-list" id="convList"></div>
+            <div class="thread" id="threadPane">
+              <div class="thread-empty">Select a conversation to reply, or wait for simulated inbound traffic.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <footer>
         <span>Built with ❤️ — <strong>TG Ezy AI OS</strong> · Free stack: Mistral + JSON store + Express</span>
         <span>UI inspired by <a href="https://attio.com" target="_blank">Attio</a> · Bot flows inspired by <a href="https://github.com/tradernonymous/EzyAi" target="_blank">EzyAi</a></span>
@@ -390,16 +449,30 @@
       qualified:{ label: 'Qualified', emoji: '🟦', cls: 'qualified' },
       closed:   { label: 'Closed',    emoji: '🟨', cls: 'closed' },
     };
+    const CHANNEL_INFO = {
+      email:    { emoji: '📧', label: 'Email' },
+      whatsapp: { emoji: '💬', label: 'WhatsApp' },
+      telegram: { emoji: '✈️', label: 'Telegram' },
+      tiktok:   { emoji: '🎵', label: 'TikTok' },
+      meta:     { emoji: '🧿', label: 'Meta' },
+    };
     let leads = [];
     let aiCount = 0;
     let plan = 'free';
+    let activeChannel = '';
+    let activeConvId = null;
     const AVATAR_COLORS = ['', 'amber', 'violet', 'green'];
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    }
 
     // ---------- Navigation ----------
     const VIEW_META = {
       overview: { title: 'Overview', crumb: 'Live snapshot of your marketing operations' },
       pipeline: { title: 'Pipeline', crumb: 'Visualize leads across the sales funnel' },
       leads:    { title: 'Leads', crumb: 'All captured leads and their stages' },
+      inbox:    { title: 'Inbox', crumb: 'Every conversation from every channel, unified' },
       ai:       { title: 'Ask AI', crumb: 'Your marketing copilot, one message away' },
       tools:    { title: 'Marketing Tools', crumb: 'AI-powered generators for every marketer need' },
     };
@@ -461,9 +534,18 @@
         $('mAi').textContent = aiCount;
         $('mPlan').textContent = plan;
         $('planChip').textContent = plan;
-        $('planFeatures').textContent = plan === 'FREE'
+        $('planFeatures').textContent = (plan === 'FREE' || plan === 'PRO-TRIAL')
           ? 'Leads, Stats, Plan, Persona, Meta, Value, Review, Growth, Swipe, Workflow'
           : 'Everything in Free + Content Studio, Campaigns, Keywords, Lead Magnets, Workflows';
+
+        const value = Number(stats.pipelineValue || 0);
+        $('mValue').textContent = '$' + value.toLocaleString();
+        $('mValueDelta').textContent = 'Closed $' + Number(stats.closedValue || 0).toLocaleString();
+        const inbox = stats.inbox || { total: 0, byChannel: {} };
+        $('mInbox').textContent = inbox.total || 0;
+        $('mInboxChips').innerHTML = Object.entries(inbox.byChannel || {})
+          .map(([ch, n]) => { const meta = CHANNEL_INFO[ch] || CHANNEL_INFO.telegram; return `<span class="chip">${meta.emoji} ${n}</span>`; })
+          .join('') || '<span class="chip">All caught up</span>';
 
         $('leadCountBadge').textContent = leads.length;
         $('leadsSub').textContent = leads.length + ' records';
@@ -473,6 +555,7 @@
         renderRecentTable();
         renderPipelineBoard();
         renderAtRisk();
+        loadInbox();
         $('lastRefresh').textContent = new Date().toLocaleTimeString();
       } catch (e) {
         console.error('Dashboard load error:', e);
@@ -503,15 +586,19 @@
 
     function leadRow(l, withAction) {
       const meta = STAGE_META[l.stage || 'new'] || STAGE_META.new;
+      const ch = CHANNEL_INFO[l.channel] || CHANNEL_INFO.telegram;
+      const value = (l.value && l.value > 0) ? '$' + Number(l.value).toLocaleString() : '—';
       const action = withAction
         ? `<span class="stage-arrows" style="margin:0;">
              ${STAGES.map(s => `<button onclick="moveLead('${l.id}','${s}');">${STAGE_META[s].emoji}</button>`).join('')}
            </span>`
         : '';
       return `<tr>
-        <td><div class="lead-cell"><span class="avatar ${avatarClass(l.name)}">${initials(l.name)}</span> ${l.name || 'Unnamed'}</div></td>
+        <td><div class="lead-cell"><span class="avatar ${avatarClass(l.name)}">${initials(l.name)}</span> ${escapeHtml(l.name || 'Unnamed')}</div></td>
+        <td><span class="channel-chip">${ch.emoji} ${ch.label}</span></td>
         <td><span class="chip ${meta.cls}">${meta.emoji} ${meta.label}</span></td>
-        <td class="muted">${l.telegramId}</td>
+        <td class="muted">${value}</td>
+        <td class="muted">${escapeHtml(l.telegramId)}</td>
         <td class="muted">${fmtDate(l.createdAt)}</td>
         <td class="muted">${fmtDate(l.updatedAt)}</td>
         ${withAction ? `<td>${action}</td>` : ''}
@@ -662,6 +749,99 @@
       });
     }
 
+    // ---------- Unified Inbox ----------
+    function fmtAgo(iso) {
+      if (!iso) return '—';
+      const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+      if (s < 60) return 'now';
+      if (s < 3600) return Math.floor(s / 60) + 'm';
+      if (s < 86400) return Math.floor(s / 3600) + 'h';
+      return Math.floor(s / 86400) + 'd';
+    }
+    function renderChannelPills(ch) {
+      const keys = ['', ...Object.keys(CHANNEL_INFO)];
+      $('channelPills').innerHTML = keys.map(k => {
+        const label = k ? CHANNEL_INFO[k].emoji + ' ' + CHANNEL_INFO[k].label : '🌐 All channels';
+        return `<button class="pill ${activeChannel === k ? 'active' : ''}" onclick="setChannel('${k}');">${label}</button>`;
+      }).join('');
+    }
+    function setChannel(ch) { activeChannel = ch; activeConvId = null; renderChannelPills(ch); loadInbox(); }
+    function loadInbox() {
+      api('/api/conversations' + (activeChannel ? '?channel=' + encodeURIComponent(activeChannel) : ''))
+        .then(renderConversationList)
+        .catch(() => {});
+      api('/api/inbox').then(inbox => {
+        const n = inbox.total || 0;
+        $('inboxBadge').textContent = n;
+        $('inboxBadge').style.display = n ? '' : 'none';
+      }).catch(() => {});
+    }
+    function renderConversationList(convs) {
+      if (!Array.isArray(convs)) convs = [];
+      if (activeConvId && !convs.find(c => c.id === activeConvId)) activeConvId = null;
+      const list = convs.map(c => {
+        const ch = CHANNEL_INFO[c.channel] || CHANNEL_INFO.telegram;
+        const last = c.messages && c.messages[c.messages.length - 1];
+        return `<button class="conv-item ${c.id === activeConvId ? 'active' : ''}" onclick="selectConversation('${c.id}');">
+          <span class="avatar ${avatarClass(c.customer.name)}">${initials(c.customer.name)}</span>
+          <div class="conv-info">
+            <div class="conv-name">${escapeHtml(c.customer.name)} <span class="channel-chip">${ch.emoji}</span></div>
+            <div class="conv-preview">${escapeHtml((last && last.text) || '…')}</div>
+            <div class="conv-when">${ch.label} · ${fmtAgo(c.lastAt)}</div>
+          </div>
+          ${c.unread ? `<span class="unread-count">${c.unread}</span>` : ''}
+        </button>`;
+      }).join('');
+      $('convList').innerHTML = list || '<div class="thread-empty">No conversations yet on this channel.</div>';
+    }
+    async function selectConversation(id) {
+      activeConvId = id;
+      loadInbox();
+      try {
+        const conv = await api('/api/conversations/' + id);
+        renderThread(conv);
+        if (conv && conv.unread) { api('/api/conversations/' + id + '/read', { method: 'POST' }).catch(() => {}); setTimeout(loadInbox, 400); }
+      } catch (e) { console.error(e); }
+    }
+    function renderThread(conv) {
+      const pane = $('threadPane');
+      if (!conv) { pane.innerHTML = '<div class="thread-empty">Select a conversation to reply.</div>'; return; }
+      const ch = CHANNEL_INFO[conv.channel] || CHANNEL_INFO.telegram;
+      const msgs = (conv.messages || []).map(m =>
+        `<div class="tmsg ${m.from === 'agent' ? 'agent' : m.from === 'system' ? 'system' : 'customer'}">
+           ${m.from !== 'system' ? `<div class="twho">${m.from === 'agent' ? 'You' : escapeHtml(conv.customer.name)}</div>` : ''}
+           ${escapeHtml(m.text)}
+         </div>`).join('');
+      pane.innerHTML = `
+        <div class="thread-head">
+          <span class="avatar ${avatarClass(conv.customer.name)}">${initials(conv.customer.name)}</span>
+          <div>
+            <div class="thread-title">${escapeHtml(conv.customer.name)} <span class="channel-chip">${ch.emoji} ${ch.label}</span></div>
+            <div class="thread-sub">${escapeHtml(conv.customer.handle || '')}${conv.subject ? ' · ' + escapeHtml(conv.subject) : ''}</div>
+          </div>
+        </div>
+        <div class="thread-messages">${msgs || '<div class="tmsg system">No messages yet.</div>'}</div>
+        <form class="thread-composer" onsubmit="sendReply(event); return false;">
+          <input id="replyInput" type="text" placeholder="Reply as your brand…" autocomplete="off" />
+          <button class="btn primary" type="submit">Send</button>
+        </form>`;
+      pane.scrollTop = 0;
+      const wrap = pane.querySelector('.thread-messages');
+      if (wrap) wrap.scrollTop = wrap.scrollHeight;
+    }
+    async function sendReply(e) {
+      e.preventDefault();
+      const input = $('replyInput');
+      if (!input || !activeConvId) return;
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      const d = await api('/api/conversations/' + activeConvId + '/reply', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text })
+      });
+      if (d && d.conversation) { renderThread(d.conversation); loadInbox(); }
+    }
+
     // ---------- AI Chat ----------
     async function sendChat(e) {
       e.preventDefault();
@@ -684,6 +864,7 @@
     // ---------- Init ----------
     $('todayDate') && ($('todayDate').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
     renderTools();
+    renderChannelPills('');
     loadDashboard();
     setInterval(loadDashboard, 10000);
   </script>

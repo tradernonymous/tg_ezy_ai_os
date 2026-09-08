@@ -1,5 +1,7 @@
 {
   "6282941580": {
-    "type": "idle"
-  }
+    "type": "idle",
+    "aiCount": 1
+  },
+  "__reminders": []
 }

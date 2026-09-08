@@ -10,7 +10,7 @@
     "start": "npm run build && npm run start:prod",
     "start:prod": "concurrently \"node dist/server.js\" \"node dist/bot.js\"",
     "lint": "eslint . --ext .ts",
-    "test": "echo \"No tests yet\"",
+    "test": "npm run tsc && node --test \"dist/**/*.test.js\"",
     "postinstall": "prisma skills sync || exit 0",
 "postbuild": "git add -A && git diff --quiet --stat || (git commit -m \"chore: auto build $(date +%Y-%m-%d)\" && git push origin main)"
   },

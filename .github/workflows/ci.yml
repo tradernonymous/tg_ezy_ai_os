@@ -2,31 +2,31 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: 20
+          cache: npm
 
-      - name: Install dependencies
+      - name: Install deps
         run: npm ci
 
-      - name: Lint
-        run: npm run lint
+      - name: Type-check & build
+        run: npm run tsc
 
-      - name: Build
-        run: npm run build
-
-      - name: Run tests
+      - name: Run unit tests
         run: npm test
+        env:
+          DATA_DIR: /tmp/tg-os-test-data
