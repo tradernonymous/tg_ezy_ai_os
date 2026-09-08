@@ -20,7 +20,7 @@ One Telegram chat + one web dashboard = your whole marketing operation:
 
 - **🤖 Bot** — lead CRM, AI marketing toolkit, guided flows, monetization, reminders, broadcasts, and a **unified inbox status**.
 - **📬 Unified Inbox** — every conversation from **Email · WhatsApp · Telegram · TikTok · Meta** lands in one place (simulated adapters ship by default with real numbers to demo). Reply from the dashboard or the bot; each reply schedules a realistic follow-up.
-- **📊 Dashboard** — Attio-inspired dark CRM: overview, kanban pipeline, leads table (channel + deal value columns), **inbox with thread view + composer**, Ask AI widget, live metrics.
+- **📊 Dashboard** — a premium, Attio-grade dark workspace: design token system, collapsible sidebar, **Ctrl/⌘K command palette**, overview metrics, value-weighted kanban, a **full leads workspace** (search, stage/channel filters, sortable table, density toggle, row selection + bulk actions, contextual detail drawer), unified **inbox with thread view + composer**, and **context-aware Ask AI**. No chart library — lightweight CSS visuals keep it fast.
 
 Every tool works **two ways**: tap a button *or* type a command. Results come with **one-tap follow-ups**, and the whole thing is gated by a **Free vs PRO** plan you control (self-serve: no Stripe/Stars needed).
 
@@ -41,13 +41,17 @@ Every tool works **two ways**: tap a button *or* type a command. Results come wi
 - 🛰️ **Trading extras (EzyAi-inspired)** — `/quote`, `/fundamentals`, `/watch`, `/watches`, `/unwatch`, `/autopilot`.
 - 🌐 **5 languages** — 🇬🇧 EN · 🇪🇸 ES · 🇫🇷 FR · 🇩🇪 DE · 🇨🇳 ZH (localized keyboards, single source of truth in `src/menus.ts`).
 
-### 📊 Dashboard (Attio-inspired)
-- 🧭 Persistent sidebar: Overview · Pipeline · Leads · **Inbox** · Ask AI · Marketing Tools.
-- 📬 **Unified Inbox view** — channel pills, conversation list, thread pane, brand composer wired to the reply API.
-- 🏗️ **Kanban pipeline board** — move leads between stages inline.
-- 📂 Leads table with initials avatars, **channel chips**, **deal value**, stage chips, created/updated — plus **➕ Add / ✏️ Edit / 🗑️ Delete** via modal (`POST`/`PATCH`/`DELETE /api/leads`).
-- 💰 Metrics: total leads, AI conversations, plan, **pipeline value**, **unread per channel**.
-- ⚠️ **Leads At Risk** (stuck > 3 days) + doughnut chart, auto-refresh every 10s.
+### 📊 Dashboard (Attio-grade UX)
+- 🧭 **App shell** — collapsible sidebar (232px → icon rail, `Ctrl+\`), sticky blurred topbar with health + "Updated" indicator, contextual page headers, off-canvas nav on mobile.
+- ⌨️ **Command palette** — `Ctrl/⌘+K` searches views, leads (name/ID/owner/tags) and actions (add lead, refresh, go to inbox, toggle sidebar) with full keyboard navigation.
+- 📬 **Unified Inbox view** — channel pills, conversation list with unread counts + "You: …" previews, thread pane, brand composer with sending state.
+- 🏗️ **Value-weighted kanban** — column totals, cards show owner + value + last activity + advance action.
+- 📂 **Leads workspace** — live search, **stage filter pills**, channel filter, 5 sort modes, compact/standard density, **row selection + bulk stage/delete**, sticky sortable header, hover-revealed row actions.
+- 🧾 **Lead detail drawer** — click any lead: full record (value, owner, tags), staged actions, **Ask-AI briefing**, inline edit form, drag-to-resize.
+- 👤 **CRUD** — ➕ Add (modal) / edit (drawer) / delete (styled confirm + toast), all wired to `POST`/`PATCH`/`DELETE /api/leads`.
+- 💰 Metrics: total leads (per-stage chips), **pipeline value**, **closed value**, **unread per channel**.
+- ⚠️ **Leads At Risk** (stuck > 3 days) with **Reply / Bump stage** actions + animated stage distribution.
+- ✨ **System UX** — toasts, styled confirm dialog, skeleton loaders, empty/error states with CTAs, focus-visible rings, ARIA labels, `Esc` closes overlays, auto-refresh every 20s.
 
 ---
 
