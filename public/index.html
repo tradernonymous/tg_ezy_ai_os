@@ -172,7 +172,34 @@
   /* ---------- header ---------- */
   header { position: sticky; top: 0; z-index: 80; transition: var(--tr-smooth);
     background: rgba(5,3,15,.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid transparent; }
-  header#siteHeader { overflow: hidden; }
+  header#siteHeader { overflow: hidden; position: relative; }
+
+  /* Header glyph layer. The spawn script existed but these rules did not, so
+     every glyph rendered as static inline text and `left`/`top` did nothing. */
+  #hdrFx { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .hdrGlyph { position: absolute; line-height: 1; pointer-events: none; will-change: transform, opacity; }
+  .glyph-idle { position: absolute; line-height: 1; pointer-events: none; opacity: .4;
+    animation: glyphDrift 7s ease-in-out infinite; }
+  @keyframes glyphDrift {
+    0%, 100% { transform: translateY(0) rotate(0deg); opacity: .28; }
+    50%      { transform: translateY(-6px) rotate(14deg); opacity: .7; }
+  }
+  /* Nav sits above the glyph layer. */
+  header#siteHeader nav { position: relative; z-index: 1; }
+  /* Motion on the header itself, not just the glyphs. */
+  .brand img { transition: transform var(--tr-smooth); }
+  .brand:hover img { transform: rotate(-8deg) scale(1.06); }
+  .nav-links a:not(.btn):not(.askai-link) { position: relative; }
+  .nav-links a:not(.btn):not(.askai-link)::after {
+    content: ''; position: absolute; left: 0; right: 100%; bottom: -4px; height: 1px;
+    background: linear-gradient(90deg, var(--green), var(--cyan));
+    transition: right var(--tr-smooth); }
+  .nav-links a:not(.btn):not(.askai-link):hover::after { right: 0; }
+
+  /* ---------- Unified Inbox glyph field (pointer-reactive) ---------- */
+  #inboxFx { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+  .ibxGlyph { position: absolute; line-height: 1; pointer-events: none; opacity: .5;
+    will-change: transform; transition: color var(--tr-smooth); }
   header.scrolled { background: rgba(5,3,15,.82); border-bottom-color: var(--border); box-shadow: 0 12px 40px rgba(0,0,0,.45); }
   nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; }
   .brand { display: flex; align-items: center; gap: 12px; font-family: var(--font-d); font-weight: 700; font-size: 17px; }
@@ -817,6 +844,8 @@
 
 <section class="cosmos" id="inbox">
   <canvas id="sky" aria-hidden="true"></canvas>
+  <!-- Channel glyphs that lean away from the pointer. -->
+  <div id="inboxFx" aria-hidden="true"></div>
   <div class="spark" aria-hidden="true"></div>
   <div class="scan" aria-hidden="true"></div>
   <div class="shoot" aria-hidden="true"></div>
@@ -1373,6 +1402,76 @@ if (askNav) {
     if (window.matchMedia('(min-width: 1081px)').matches && typeof window.evosOpenAI === 'function') { e.preventDefault(); window.evosOpenAI(); }
   });
 }
+
+// ---------- Unified Inbox: channel glyphs that lean away from the pointer ----------
+(() => {
+  const host = document.getElementById('inboxFx');
+  const section = document.getElementById('inbox');
+  if (!host || !section) return;
+  if (document.documentElement.dataset.motion === 'off') return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const GLYPHS = ['✉', '✈', '◆', '✦', '●', '✧', '▲', '✺'];
+  const COLS = ['#0BD97E', '#22d3ee', '#a855f7', '#F4C63D', '#e879f9'];
+  const COUNT = window.matchMedia('(max-width: 720px)').matches ? 10 : 18;
+  const nodes = [];
+
+  for (let i = 0; i < COUNT; i++) {
+    const el = document.createElement('span');
+    el.className = 'ibxGlyph';
+    el.textContent = GLYPHS[i % GLYPHS.length];
+    const x = 4 + Math.random() * 92;      // percent
+    const y = 6 + Math.random() * 88;
+    el.style.left = x + '%';
+    el.style.top = y + '%';
+    el.style.color = COLS[i % COLS.length];
+    el.style.fontSize = (11 + Math.random() * 13).toFixed(1) + 'px';
+    el.style.opacity = (0.25 + Math.random() * 0.35).toFixed(2);
+    host.appendChild(el);
+    nodes.push({ el, x, y, dx: 0, dy: 0, tx: 0, ty: 0, rot: Math.random() * 40 - 20 });
+  }
+
+  let pointer = null;
+  let raf = 0;
+
+  const frame = () => {
+    raf = 0;
+    let moving = false;
+    const r = host.getBoundingClientRect();
+    for (const n of nodes) {
+      if (pointer) {
+        // Repel: closer to the pointer means a larger push outward.
+        const gx = r.left + (n.x / 100) * r.width;
+        const gy = r.top + (n.y / 100) * r.height;
+        const ax = gx - pointer.x;
+        const ay = gy - pointer.y;
+        const dist = Math.hypot(ax, ay) || 1;
+        const reach = 220;
+        const force = Math.max(0, 1 - dist / reach);
+        n.tx = (ax / dist) * force * 26;
+        n.ty = (ay / dist) * force * 26;
+      } else {
+        n.tx = 0;
+        n.ty = 0;
+      }
+      n.dx += (n.tx - n.dx) * 0.12;
+      n.dy += (n.ty - n.dy) * 0.12;
+      if (Math.abs(n.tx - n.dx) > 0.1 || Math.abs(n.ty - n.dy) > 0.1) moving = true;
+      const lean = (n.dx + n.dy) * 0.6 + n.rot;
+      n.el.style.transform = 'translate(' + n.dx.toFixed(2) + 'px,' + n.dy.toFixed(2) + 'px) rotate(' + lean.toFixed(2) + 'deg)';
+    }
+    if (moving || pointer) raf = requestAnimationFrame(frame);
+  };
+
+  const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+
+  section.addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'touch') return;
+    pointer = { x: e.clientX, y: e.clientY };
+    kick();
+  });
+  section.addEventListener('pointerleave', () => { pointer = null; kick(); });
+})();
 
 // ---------- header hover glyphs (website only) ----------
 const hdrFx = document.getElementById('hdrFx');
