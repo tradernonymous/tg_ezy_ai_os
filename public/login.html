@@ -47,6 +47,8 @@
   .step-hint { font-size: 11.5px; color: var(--text-3); margin-bottom: 8px; line-height: 1.5; }
   .step-hint b { color: var(--text-2); }
   .code-preview { background: #0d1120; border: 1px dashed var(--border-strong); border-radius: var(--r); padding: 10px 12px; font-size: 22px; font-weight: 800; text-align: center; letter-spacing: 6px; color: var(--green); margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+  .provider-hint { font-size: 12px; color: var(--text-3); line-height: 1.6; margin-top: 10px; text-align: center; word-break: break-word; }
+  .provider-hint code { color: var(--text-2); background: rgba(255,255,255,.06); padding: 1px 5px; border-radius: 4px; }
   .err { color: var(--danger); font-size: 12px; min-height: 16px; margin: 4px 0 0; display: none; }
   .err.show { display: block; }
   .foot { margin-top: 18px; font-size: 11.5px; color: var(--text-3); text-align: center; line-height: 1.6; }
@@ -120,14 +122,22 @@ function providerBtn(emoji, label, onClick) {
   document.getElementById('providers').appendChild(b);
 }
 
+function showHint(containerId, html) {
+  const host = document.getElementById(containerId);
+  if (!host) return null;
+  const h = document.createElement('div');
+  h.className = 'provider-hint';
+  h.innerHTML = html;
+  host.appendChild(h);
+  return h;
+}
+
 function renderProviders() {
   const host = document.getElementById('providers');
   host.innerHTML = '';
   if (cfg.googleClientId) {
     host.innerHTML += `<div class="gsi" id="gsiWrap"></div>`;
     loadGSI();
-  } else if (cfg.telegramBot) {
-    // telegram widget below
   }
   if (cfg.telegramBot) {
     const wrap = document.createElement('div');
@@ -135,7 +145,12 @@ function renderProviders() {
     wrap.style.cssText = 'display:flex;justify-content:center;';
     host.insertBefore(wrap, host.firstChild);
     loadTelegramWidget();
-    providerBtn('✈️', 'Continue with Telegram', () => alert('Telegram widget failed to load — retry on reload.'));
+    providerBtn('✈️', 'Continue with Telegram', () => alert('Telegram widget failed to load — add your domain in @BotFather (Bot Settings → Domain) and reload.'));
+    setTimeout(() => {
+      const w = document.getElementById('tgWrap');
+      if (!w || w.querySelector('iframe')) return;
+      showHint('tgWrap', 'Telegram widget didn&#39;t render. In <b>@BotFather</b>: Bot Settings → Domain, add <code>tg-ezy-ai-os-young-blossom-4821.fly.dev</code> and <code>localhost</code>, then reload.');
+    }, 4000);
   }
   if (cfg.googleClientId === '' && cfg.telegramBot === '') {
     host.innerHTML = `<p style="font-size:12px;color:var(--text-3);line-height:1.6;">Sign-in providers are being connected — for now, use the <b>Magic Key</b> below${isDevPreview() ? ' (shows your code instantly)' : ''}.</p>`;
@@ -180,7 +195,8 @@ function loadGSI() {
       });
       globalThis.google?.accounts?.id.renderButton(document.getElementById('gsiWrap'), { theme: 'filled_black', size: 'large', width: 366, shape: 'pill' });
     } catch (e) { /* fall through to magic */ }
-  };
+  s.onerror = () => showHint('gsiWrap', 'Google sign-in failed to load. Add <code>https://tg-ezy-ai-os-young-blossom-4821.fly.dev</code> to <b>Authorized JavaScript origins</b> in Google Cloud Console (APIs & Services → Credentials), save, wait ~2 min, reload.');
+};
   document.head.appendChild(s);
 }
 
