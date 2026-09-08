@@ -131,6 +131,13 @@ The landing page is built on **one continuous structural spine**, not a stack of
 | 📱 **Responsive rail** | Never hidden on small screens — relocates into the gutter (14px tablet, 12px phone), clear of all content. |
 | 🎛️ **Uniform controls** | Every button and input shares `--control-h: 48px`. |
 | 🔎 **GEO / SEO** | JSON-LD graph — `Organization`, `WebSite`, `SoftwareApplication`, `FAQPage` — matched to a visible FAQ section. |
+| 🧱 **Cascade order** | All `@media` blocks live at the **end** of the stylesheet, widest breakpoint first. |
+| ✨ **Ask AI card** | Spans 3 of 4 arsenal columns beside Unified Inbox, so the final row fills exactly. |
+
+<br>
+
+> [!IMPORTANT]
+> **Media queries go last.** A media block and the base rule it overrides usually share the same specificity, so whichever is declared **last** wins. When the media blocks sat first, three separate overrides silently lost and had to be patched with inflated selectors (`.flow .step`, `.tools .tool-chat .try`). They now live at the end of the stylesheet, widest breakpoint first, and overrides work with plain selectors. Keep new ones there.
 
 <br>
 

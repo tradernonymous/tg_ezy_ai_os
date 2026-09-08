@@ -298,14 +298,6 @@
   .split .faq-list { margin: 0; max-width: none; }
   .split .flow { grid-template-columns: 1fr 1fr; }
   .split .step:nth-child(3) { border-left: 0; padding-left: 0; }
-  @media (max-width: 900px) {
-    .split { grid-template-columns: 1fr; gap: 30px; }
-    .split .sec-head { position: static; max-width: none; }
-    .split .flow { grid-template-columns: 1fr; }
-    /* Stacked steps separate with a top rule; a left rule reads wrong vertically. */
-    .flow .step, .split .flow .step:nth-child(3) { border-left: 0; border-top: 1px solid var(--hair); padding: 20px 0 22px; }
-    .flow .step:first-child { border-top: 0; padding-top: 4px; }
-  }
 
   /* reveal */
   .reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s cubic-bezier(.22,1,.36,1), transform .7s cubic-bezier(.22,1,.36,1); }
@@ -563,29 +555,11 @@
   .ask-cta .btn { padding: 14px 32px; font-size: 15px; }
 
   /* Ask AI: standalone section is mobile/tablet only; desktop uses the modal from the arsenal card */
-  @media (min-width: 1081px) { #askai, .rule--compact { display: none; } }
 
   /* Desktop: Ask AI ends the arsenal as an enlarged wide card (2 columns), paired with Unified Inbox */
-  @media (min-width: 1081px) {
-    .tool.tool-chat { grid-column: span 3; flex-direction: row; align-items: center; gap: 22px; padding: 26px 30px; min-height: 124px; }
-    .tool.tool-chat .ic { width: 56px; height: 56px; border-radius: 16px; margin-bottom: 0; }
-    .tool.tool-chat .ic svg { width: 26px; height: 26px; }
-    .tool.tool-chat .tt { margin-top: 0; }
-    .tool.tool-chat h4 { font-size: 18px; }
-    .tool.tool-chat p { font-size: 13.5px; max-width: 720px; }
-    .tools .tool.tool-chat .try { margin-top: 0; align-self: center; margin-left: auto;
-      height: 56px; padding: 0 26px; font-size: 12.5px; }
-  }
 
   /* Small-screen Ask AI entry: full-width button with a colourful animated fill. */
   .tools-mcta { display: none; }
-  @media (max-width: 1080px) {
-    .tools-mcta { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 26px; }
-    .tools-mcta .btn.tools-mcta__btn { width: 100%; max-width: 460px; padding: 15px 22px; font-size: 15px; font-weight: 750;
-      background-image: linear-gradient(90deg, var(--green), var(--cyan), var(--purple), var(--fuchsia), var(--green));
-      background-size: 300% 100%; animation: specShift 6s linear infinite; color: #0a0518; border-color: rgba(255,255,255,.25); }
-    .tools-mcta__note { font-size: 12px; color: var(--text-3); }
-  }
 
   /* Ask AI arsenal card: mobile/tablet = same cell size as every other tool, CTA flows inside the card (no overlap) */
   .tool.tool-chat { cursor: pointer; }
@@ -639,6 +613,36 @@
   #aiChips { padding: 2px 18px 11px; }
 
   /* ---------- responsive ---------- */
+
+  /* ==========================================================
+     Responsive overrides.
+     These live at the end on purpose: media blocks and the base
+     rules they override often share a specificity, so whichever
+     is declared last wins. Keeping them here means an override
+     works without inflating its selector.
+     ========================================================== */
+
+  @media (min-width: 1081px) { #askai, .rule--compact { display: none; } }
+
+  @media (min-width: 1081px) {
+    .tool.tool-chat { grid-column: span 3; flex-direction: row; align-items: center; gap: 22px; padding: 26px 30px; min-height: 124px; }
+    .tool.tool-chat .ic { width: 56px; height: 56px; border-radius: 16px; margin-bottom: 0; }
+    .tool.tool-chat .ic svg { width: 26px; height: 26px; }
+    .tool.tool-chat .tt { margin-top: 0; }
+    .tool.tool-chat h4 { font-size: 18px; }
+    .tool.tool-chat p { font-size: 13.5px; max-width: 720px; }
+    .tool.tool-chat .try { margin-top: 0; align-self: center; margin-left: auto;
+      height: 56px; padding: 0 26px; font-size: 12.5px; }
+  }
+
+  @media (max-width: 1080px) {
+    .tools-mcta { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 26px; }
+    .btn.tools-mcta__btn { width: 100%; max-width: 460px; padding: 15px 22px; font-size: 15px; font-weight: 750;
+      background-image: linear-gradient(90deg, var(--green), var(--cyan), var(--purple), var(--fuchsia), var(--green));
+      background-size: 300% 100%; animation: specShift 6s linear infinite; color: #0a0518; border-color: rgba(255,255,255,.25); }
+    .tools-mcta__note { font-size: 12px; color: var(--text-3); }
+  }
+
   @media (max-width: 1080px) {
     .tools { grid-template-columns: repeat(3, 1fr); }
     .plans { grid-template-columns: repeat(3, 1fr); }
@@ -655,6 +659,16 @@
     .conn { display: none; }
     .stats { grid-template-columns: repeat(2, 1fr); }
   }
+
+  @media (max-width: 900px) {
+    .split { grid-template-columns: 1fr; gap: 30px; }
+    .split .sec-head { position: static; max-width: none; }
+    .split .flow { grid-template-columns: 1fr; }
+    /* Stacked steps separate with a top rule; a left rule reads wrong vertically. */
+    .step, .split .step:nth-child(3) { border-left: 0; border-top: 1px solid var(--hair); padding: 20px 0 22px; }
+    .step:first-child { border-top: 0; padding-top: 4px; }
+  }
+
   @media (max-width: 720px) {
     /* Phone: rail tucks into the gutter at 18px, inside the 24px content
        padding, so it can never sit under text or a tap target. */
@@ -680,6 +694,7 @@
     .ask-card { min-height: 340px; }
     .convert { padding: 40px 20px; }
   }
+
   @media (max-width: 460px) {
     .tools { grid-template-columns: 1fr 1fr; }
     .nav-links a:not(.btn) { display: none; }
@@ -687,6 +702,7 @@
     .ask-input input { font-size: 16px; }
     #floatCta { bottom: calc(16px + env(safe-area-inset-bottom)); max-width: calc(100vw - 24px); }
   }
+
   @media (pointer: coarse) { .tool:hover { transform: none; } }
 </style>
 </head>
