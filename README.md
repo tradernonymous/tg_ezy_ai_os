@@ -181,7 +181,9 @@ Security & robustness: JSON body **size limit** (100kb), **rate limiting** on `/
 | `SESSION_SECRET` | — | **≥32 chars**, HMAC-signs web sessions (required for restarts to keep sessions valid) |
 | `GOOGLE_CLIENT_ID` | — | OAuth Web client id → enables "Continue with Google" on `/login` |
 | `BOT_USERNAME` | — | Public bot username → enables the Telegram Login Widget |
-| `MAGIC_DEV_PREVIEW` | `true` | Magic Key codes shown in-browser (dev preview) instead of shipped to email/Telegram |
+| `MAGIC_DEV_PREVIEW` | `true` | Magic Key codes shown in-browser (dev preview); auto-fallback whenever email is unconfigured |
+| `EMAIL_API_KEY` | — | Resend API key → emails Magic Key codes (no SDK, direct REST) |
+| `EMAIL_FROM` | — | Verified Resend sender, e.g. `onboarding@yourdomain.com` |
 | `STRIPE_SECRET_KEY` | — | Set to turn on Stripe checkout (placeholder — SDK not installed yet) |
 | `USDT_ADDRESS` | — | Set to offer manual USDT checkout |
 | `DATA_DIR` | `<project>/db` | Where JSON stores live |

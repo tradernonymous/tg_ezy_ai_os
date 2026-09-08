@@ -222,8 +222,10 @@ document.getElementById('magicForm').addEventListener('submit', async (e) => {
     document.getElementById('codePreview').classList.remove('hidden');
     document.getElementById('codePreview').textContent = d.code;
     document.getElementById('verifyHint').innerHTML = 'Dev preview: your one-time code is shown above. Type it below to continue.';
+  } else if (d.delivered === 'email') {
+    document.getElementById('verifyHint').textContent = `A 6-digit code is on its way to ${email}. Check your inbox (and spam folder), then enter it below.`;
   } else {
-    document.getElementById('verifyHint').textContent = `A code was dispatched to ${email}. Delivery is pending config — use dev preview (MAGIC_DEV_PREVIEW=true) to see it instantly.`;
+    document.getElementById('verifyHint').textContent = `Email delivery is not configured yet — set EMAIL_API_KEY and EMAIL_FROM so codes are emailed. Your code: check the server logs.`;
   }
   document.getElementById('magicCode').focus();
 });

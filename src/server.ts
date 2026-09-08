@@ -32,7 +32,7 @@ import {
   Account,
 } from "./accountStore";
 import { signSession, verifySession, SESSION_COOKIE, sessionCookieOptions } from "./session";
-import { verifyMagicToken, requestMagicToken } from "./magic";
+import { verifyMagicToken, requestMagicToken, emailConfigured } from "./magic";
 import { createCheckout } from "./billing";
 import { mapLegacy, tierIndex, TIERS, PLANS } from "./plans";
 import { gateFor } from "./toolGates";
@@ -111,7 +111,11 @@ function clearSessionCookie(res: express.Response): void {
 }
 
 // ---------- Health ----------
-app.get("/", (_req, res) => {
+app.get("/", (req, res) => {
+  const accept = String(req.headers.accept || "");
+  if (accept.includes("text/html")) {
+    return res.redirect(signedIn(req) ? "/dashboard" : "/home");
+  }
   res.json({ status: "ok", service: "TG Ezy AI OS", timestamp: new Date().toISOString() });
 });
 
@@ -154,6 +158,7 @@ app.get("/api/auth/config", (_req, res) => {
     googleClientId: process.env.GOOGLE_CLIENT_ID || "",
     telegramBot: process.env.BOT_USERNAME || "",
     magicDevPreview: process.env.MAGIC_DEV_PREVIEW === "true",
+    emailConfigured: emailConfigured(),
   });
 });
 
@@ -237,7 +242,7 @@ app.post("/api/auth/magic/request", async (req, res) => {
   if (!applyRateLimit(req, res)) return;
   const email = String(req.body?.email || "").trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: "Invalid email" });
-  const delivery = requestMagicToken(email);
+  const delivery = await requestMagicToken(email);
   res.json({ ok: true, delivered: delivery.delivered, code: delivery.delivered === "preview" ? (delivery as { code: string }).code : undefined });
 });
 
