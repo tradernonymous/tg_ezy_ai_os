@@ -221,7 +221,7 @@ fly deploy
 
 > Reminder: `fly deploy` rebuilds from the committed source — the dashboard lives in `public/` and is baked into the image, so redeploy is all that's needed to ship dashboard UI changes.
 
-CI (`.github/workflows/ci.yml`) runs **type-check + tests** on every push/PR to `main`. No API keys needed to build or test.
+CI (`.github/workflows/ci.yml`, **Node 22**, `actions/checkout`/`setup-node` v5) runs **type-check + the full test suite** on every push/PR to `main` — currently **green** ✅. No API keys needed to build or test.
 
 ---
 
@@ -229,9 +229,11 @@ CI (`.github/workflows/ci.yml`) runs **type-check + tests** on every push/PR to 
 
 1. **`npm run dev`** — hot-reload bot + API (`ts-node-dev`).
 2. **`npm run tsc`** — type-check / compile to `dist/`.
-3. **`npm test`** — compiles then runs the `node:test` suite.
+3. **`npm test`** — compiles, then runs the `node:test` suite via `scripts/run-tests.mjs` (auto-discovers `dist/__tests__/*.test.js`; works on Node 18+, no glob issues on Windows or CI).
 4. **`npm run lint`** — ESLint on all `.ts`.
 5. **`npm run build`** — `tsc` → `dist/`.
+
+> ⚠️ **Requires Node ≥ 18** (recommend **Node 22 LTS** — matches CI). The package's `prebuild`/`postbuild` hooks verify the working tree stays clean after builds.
 
 ---
 
