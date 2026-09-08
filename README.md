@@ -1,126 +1,164 @@
-# 📣 tg_ezy_ai_os
+# 🚀 TG Ezy AI OS
 
-**Telegram‑first AI Marketing OS** – a lightweight, free‑service‑only platform that lets a Telegram bot capture leads, store them in a local JSON file, and expose a REST API for dashboards or internal tools. Powered by Mistral AI for natural‑language replies.
+> **Telegram-first AI Marketing Command Center** — a free-stack platform where a Telegram bot runs your whole marketing life: lead capture, CRM pipeline, and every content tool a marketer needs, all powered by Mistral AI.
 
---- 
+<p align="center">
+  <img src="https://img.shields.io/badge/bot-Telegraf-2CA5E0?style=flat-square&logo=telegram" alt="Telegraf" />
+  <img src="https://img.shields.io/badge/api-Express-000000?style=flat-square&logo=express" alt="Express" />
+  <img src="https://img.shields.io/badge/ai-Mistral%20Free-orange?style=flat-square" alt="Mistral" />
+  <img src="https://img.shields.io/badge/lang-TypeScript-3178C6?style=flat-square&logo=typescript" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/db-JSON%20Store-005C5C?style=flat-square" alt="JSON store" />
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT license" />
+  <img src="https://img.shields.io/github/actions/workflow/status/printezy247/tg_ezy_ai_os/ci.yml?style=flat-square&label=CI" alt="CI" />
+</p>
 
-## ✨ Features (MVP)
+---
 
-- 🤖 **Telegram bot** (Telegraf) that welcomes users, pings, and forwards text to Mistral AI.  
-- 🌐 **Express REST API** (`/api/leads`, `/api/stats`) backed by a local `db/leads.json` file – no external DB required.  
-- 🧠 **Mistral AI** integration for AI‑generated responses (free tier).  
-- 📁 **Zero‑config data store** – all leads live in `db/leads.json`; easy to back up or migrate.  
-- 🛠️ **TypeScript** (strict) with ESLint, ready for CI.  
-- 📡 **GitHub Actions** CI that lints, builds, and tests on every push/PR.  
-- 🎨 **Modern, futuristic UI** – premium dark theme with glassmorphism cards (see the dashboard below).
+## ✨ Why this bot?
 
---- 
+Everything a marketer needs, in one Telegram chat — **every tool works two ways**: tap a button *or* type a command. Results come with **one-tap follow-ups** (hooks → captions → email), and the whole thing is gated by a **Free vs PRO** plan you control.
 
-## 🚀 Quick start (local development)
+### 🤖 Bot
+- 🗂️ **Lead CRM** — capture leads, set stages (`new → contacted → qualified → closed`), filter, stats, delete.
+- 🧠 **AI Marketing Toolkit**
+  - **Free tier:** Plan · Persona · SEO Meta · Value Map · Content Review · Growth Prompts · Swipe Files
+  - **PRO tier:** 📝 Content Studio (posts/emails/hooks/captions) · ✉️ Campaign Builder · 🔑 Keyword Research · 🧲 Lead Magnets · ⚙️ Workflows
+- 💳 **Monetization (EzyAi-style)** — `/plans`, free trial, `/redeem CODE`, admin `/mkcode` `/codes` `/revokecode` `/settrial`, `PRO_ACCESS_IDS` always-free list.
+- 🎛️ **Guided flows** — submenus with `⬅️ Back` / `🏠 Main Menu`, plus inline one-tap follow-ups on every AI result.
+- 📚 **Trading extras (EzyAi-inspired)** — `/quote`, `/fundamentals`, `/watch`, `/watches`, `/unwatch`, `/autopilot`.
+- 🌐 **5 languages** — 🇬🇧 EN · 🇪🇸 ES · 🇫🇷 FR · 🇩🇪 DE · 🇨🇳 ZH.
+
+### 📊 Dashboard (Attio-inspired)
+- 🧭 Persistent left sidebar (Overview · Pipeline · Leads · Ask AI · Tools).
+- 🏗️ **Kanban pipeline board** — move leads between stages inline.
+- 📂 Clean **leads table** with initials avatars, stage chips, created/updated.
+- ⚠️ **Leads At Risk** — stuck > 3 days panel.
+- 💬 **Ask AI chat widget** wired to `/api/chat`.
+- 📈 Live metrics + doughnut chart, auto-refresh every 10s.
+
+---
+
+## 🚀 Quick start
 
 ```bash
-# 1️⃣ Clone (already done)
+git clone https://github.com/printezy247/tg_ezy_ai_os.git
 cd tg_ezy_ai_os
 
-# 2️⃣ Install dependencies
 npm ci
 
-# 3️⃣ Create .env (copy from .env.example) and fill your credentials
-cp .env.example .env
-#   – BOT_TOKEN = your Telegram Bot token (get from @BotFather)
-#   – MISTRAL_API_KEY = your Mistral API key (sign up at https://mistral.ai)
+copy .env.example .env   # Windows
+#   BOT_TOKEN=...            from @BotFather
+#   MISTRAL_API_KEY=...      from https://mistral.ai (free tier)
+#   ADMIN_TELEGRAM_ID=...    (optional) your chat id — enables /mkcode etc.
+#   PRO_ACCESS_IDS=...       (optional) comma-separated always-PRO chat ids
 
-# 4️⃣ Start both the bot and the API server
 npm run dev
 ```
 
-The bot will print **“Bot started”** and the API will be reachable at `http://localhost:3000`.
+> ⚠️ **Windows PowerShell note:** if `npm` is blocked, use the wrapper: `& "C:\Program Files\nodejs\npm.cmd" run dev`.
 
---- 
+The bot prints **"Bot started"** and the API is at `http://localhost:3000` → dashboard at [`/dashboard`](http://localhost:3000/dashboard).
 
-## 🛠️ API reference
+---
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/` | Health check – returns `{status:"ok"}`. |
-| `GET` | `/api/leads` | List all leads (optionally filter `?stage=new`). |
-| `GET` | `/api/leads/:id` | Get a single lead by its internal `id`. |
-| `POST` | `/api/leads` | Create a new lead. Body: `{ "telegramId": "123456789", "name":"Alice", "stage":"new" }`. |
-| `PATCH` | `/api/leads/:id` | Update a lead’s `name` or `stage`. |
-| `DELETE` | `/api/leads/:id` | Delete a lead. |
-| `GET` | `/api/stats` | Totals and breakdown by stage, e.g. `{total:5, byStage:{new:3, contacted:2}}`. |
-
-**cURL examples**
-
-```bash
-# Health
-curl http://localhost:3000/
-
-# List leads
-curl http://localhost:3000/api/leads
-
-# Add a lead
-curl -X POST http://localhost:3000/api/leads \
-  -H "Content-Type: application/json" \
-  -d '{"telegramId":"987654321","name":"Bob","stage":"new"}'
-
-# Stats
-curl http://localhost:3000/api/stats
-```
-
---- 
-
-## 🤖 Bot commands
+## 🧰 Bot commands
 
 | Command | Effect |
-|---------|--------|
-| `/start` | Replies with a welcome message and shows the **Main Menu** keyboard. |
-| `/ping` | Replies `pong`. |
-| `/addlead` | Puts the bot into “name‑capture” mode; the next message you send is stored as the lead’s name. |
-| `/stage <New\|Contacted\|Qualified\|Closed>` | Directly sets the lead’s stage. Example: `/stage qualified`. |
-| Any other text message | If the bot is not in a lead‑creation flow, it simply echoes **“You said: …”** (replace later with a Mistral call). |
+|---|---|
+| `/start` `/help` | Welcome + full help menu |
+| `/plans` | 💳 Pricing (Free/PRO/Enterprise) + trial button |
+| `/redeem CODE` | 🎫 Activate a gift/trial code |
+| `/addlead` | ➕ Guided 2-step lead capture (name → stage) |
+| `/stage <new\|contacted\|qualified\|closed>` | 🔄 Set lead stage |
+| `/stats` `/leads` | 📊 Stats + list (filter by stage) |
+| `/deletelead <telegramId>` | 🗑️ Remove a lead |
+| `/plan` `/persona` | 💳 Plan & brand persona settings |
+| `/meta` `/valuemap` `/review` | 🔍 SEO meta · 🗺️ value map · ✏️ review |
+| `/growth` `/swipe` | 📈 prompts · 📂 swipe files |
+| `/content` `/campaign` `/keywords` `/leadmagnet` | 📝 PRO content studio, campaigns, keywords, magnets |
+| `/workflow` `/remind` | ⚙️ automation notes · ⏰ set a reminder |
+| `/quote` `/fundamentals` | 💰 quick quote · 📚 fundamentals |
+| `/watch` `/watches` `/unwatch` `/autopilot` | 👁️ EzyAi-style live watches & auto-signals |
+| `/dashboard` | 📊 Link to the dashboard |
 
---- 
+**Admin-only:** `/mkcode trial <days> [count] [uses]` · `/mkcode 1mo [count] [uses]` · `/codes` · `/revokecode CODE` · `/settrial <1-30>`
 
-## 📦 Dependencies (free only)
+---
 
-| Package | Purpose |
-|---------|---------|
-| `telegraf` | Telegram Bot API wrapper |
-| `express` | HTTP server |
-| `dotenv` | Environment variables |
-| `node-fetch` | HTTP requests to Mistral AI |
-| `concurrently` | Run bot & server together |
-| `typescript` | Static typing |
-| `eslint` + `@typescript-eslint` | Code quality |
+## 🛠️ REST API
 
---- 
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | Health check |
+| `GET` | `/api/leads` | List all leads |
+| `GET` | `/api/leads/:id` | Single lead |
+| `POST` | `/api/leads` | Create lead `{ telegramId, name, stage }` |
+| `PATCH` | `/api/leads/:id` | Update `name` / `stage` |
+| `DELETE` | `/api/leads/:id` | Delete lead |
+| `GET` | `/api/stats` | `{ total, byStage, plan, aiCount }` |
+| `POST` | `/api/chat` | AI chat `{ message }` → `{ reply }` |
+| `GET` | `/dashboard` | HTML dashboard |
 
-## 📈 Inspired by / Trending repos (referenced for design & structure)
+```bash
+curl http://localhost:3000/api/stats
+# {"total":5,"byStage":{"new":3,"contacted":2},"plan":"free","aiCount":12}
+```
 
-- **[tradernonymous/EzyAi](https://github.com/tradernonymous/EzyAi)** — Telegram bot structure, guided stage flows (`/watch`, `/fundamentals`, `/autopilot`), inline button menus, and persistent state patterns. Our bot adopts the same guided flow (`pair → style → risk`) with `Back/Cancel`, confirmation messages, and one-tap follow-ups.
-- **[jquery-lang-js](https://github.com/jquery-lang-js/jquery-lang-js)** — Client-side language switching via cookie/session persistence (`localStorage`) and dynamic JSON language packs (`public/lang/en.json`, etc.). Our `/lang` submenu uses the same instant-switch pattern (no reload) and stores selection in `db/state.json`.
-- **[filament-language-switch](https://github.com/filamentphp/filament)** — Categorized submenu layout (`mainMenu` categories: Stats & Leads, Marketing, Tools & Auto, Language, Settings) with `Back` navigation. Our bot menus follow the same categorized structure with independent submenu cards (`planSubMenu`, `personaSubMenu`, etc.).
-- **[telegraf/telegraf](https://github.com/telegraf/telegraf)** – Feature‑rich Telegram bot library.  
-- **[langchain-ai/langchainjs](https://github.com/langchain-ai/langchainjs)** – LLM orchestration, free and open‑source.  
-- **[twentycrm/twenty](https://github.com/twentycrm/twenty)** – AI‑native CRM, lead pipeline ideas.  
-- **[chatwoot/chatwoot](https://github.com/chatwoot/chatwoot)** – Unified inbox & human takeover, useful for support bots.  
-- **[activepieces/activepieces](https://github.com/activepieces/activepieces)** – No‑code automation, inspiration for lead‑stage workflows.  
-- **[vercel/ai-chatbot](https://github.com/vercel/ai-chatbot)** – Minimal AI chatbot backend, free deployment on Vercel.
+---
 
---- 
+## 🗂️ Project layout
+
+```
+src/
+  bot.ts          # Telegram bot — menus, flows, monetization, AI
+  server.ts       # Express API + dashboard
+  leadStore.ts    # JSON CRUD (db/leads.json)
+  aiProvider.ts   # Mistral client (free tier)
+public/
+  dashboard.html  # Attio-style marketing dashboard
+  lang/*.json     # 🇬🇧🇪🇸🇫🇷🇩🇪🇨🇳 language packs
+db/
+  leads.json      # Lead records
+  state.json      # Per-user sessions, plans, watches, codes
+```
+
+---
+
+## 💳 Monetization model (Free vs PRO)
+
+| | Free | PRO |
+|---|---|---|
+| Leads, Stats, Pipeline | ✅ | ✅ |
+| Plan · Persona · Meta · Value · Review · Growth · Swipe | ✅ | ✅ |
+| Content Studio · Campaigns · Keywords · Lead Magnets | 🔒 | ✅ |
+| Live watch/autopilot flows | — | ✅ |
+| Price | $0 | `$14.99`/mo (set yours in `src/bot.ts`) |
+
+- 🎁 Free trial: `/plans` → **Claim** (default 3 days, admin can `/settrial`).
+- 🎫 Codes: create with `/mkcode`, redeem with `/redeem CODE`.
+- 👥 `PRO_ACCESS_IDS` env grants permanent PRO to selected chat ids.
+
+---
+
+## 📈 Inspired by (design & structure)
+
+- **[tradernonymous/EzyAi](https://github.com/tradernonymous/EzyAi)** — guided flows (pair → style → mode) with `Back/Cancel`, inline follow-ups (`Watch / Fundamentals / Quote`) on every result, persistent button menu, and Free-vs-PRO gating with `/plans`, `/redeem`, trials, and admin codes.
+- **[attio.com](https://attio.com)** — premium dark CRM aesthetic for the dashboard: sidebar workspace, kanban pipeline board, clean leads table, "at risk" flags, and an AI assistant panel.
+- **[telegraf/telegraf](https://github.com/telegraf/telegraf)** — feature-rich Telegram bot library.
+- **[jquery-lang-js / filament-language-switch](https://github.com/jquery-lang-js/jquery-lang-js)** — instant client-side language switching via JSON packs + `localStorage`.
+- **[twentycrm/twenty](https://github.com/twentycrm/twenty)** — AI-native CRM / pipeline ideas.
+- **[activepieces/activepieces](https://github.com/activepieces/activepieces)** — no-code automation, inspiration for lead-stage workflows.
+
+---
 
 ## 🛠️ Development workflow
 
-1. **`npm run dev`** – starts bot & API with hot‑reload (`ts-node-dev`).  
-2. **`npm run lint`** – lints all `.ts` files.  
-3. **`npm run build`** – compiles TS to `dist/`.  
-4. **`npm test`** – placeholder (add real tests later).  
-5. **CI** (GitHub Actions) runs steps 2‑4 on every push/PR.  
+1. **`npm run dev`** — hot-reload bot + API (`ts-node-dev`).
+2. **`npm run lint`** — ESLint on all `.ts`.
+3. **`npm run build`** — `tsc` → `dist/` (auto `postbuild` commits & pushes).
+4. **`npm test`** — placeholder (tests coming).
 
-*After each `npm run build` the `postbuild` script automatically commits and pushes any changes (see `package.json`).*
-
---- 
+---
 
 ## 📄 License
 
@@ -128,4 +166,4 @@ curl http://localhost:3000/api/stats
 
 ---
 
-*Built with ❤️ using only free services (Mistral free tier, JSON store, GitHub Actions).*
+<p align="center"><sub>Built with ❤️ using only free services — Mistral free tier · JSON store · GitHub Actions · Express</sub></p>

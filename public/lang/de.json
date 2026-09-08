@@ -24,5 +24,14 @@
   "live_metrics": "Live-Metriken",
   "quick_actions": "Schnelle Aktionen",
   "chat_assistant": "💬 KI-Assistent",
-  "ask_anything": "Frage etwas über deine Leads..."
+  "ask_anything": "Frage etwas über deine Leads...",
+  "leads": "Leads",
+  "leads_sub": "Aktive Pipeline",
+  "ai_conversations": "KI-Gespräche",
+  "ai_sub": "Heute erzeugt",
+  "plan_sub": "Abonnement-Tier",
+  "th_name": "Name",
+  "th_stage": "Stufe",
+  "th_telegram": "Telegram-ID",
+  "th_created": "Erstellt"
 }

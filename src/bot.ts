@@ -29,7 +29,16 @@ function isPayingUser(id?: string): boolean {
   if (PRO_ACCESS_IDS.includes(id)) return true;
   const s = userState[id];
   if (!s) return false;
-  if (s.plan === 'pro' || s.plan === 'enterprise') return true;
+  if (s.plan === 'enterprise') return true;
+  if (s.plan === 'pro') {
+    if (s.proUntil && new Date(s.proUntil).getTime() <= Date.now()) {
+      s.plan = 'free';
+      delete s.proUntil;
+      saveState(userState);
+      return false;
+    }
+    return true;
+  }
   if (s.trialEndsAt && new Date(s.trialEndsAt).getTime() > Date.now()) return true;
   return false;
 }
@@ -1172,14 +1181,15 @@ bot.command('redeem', async (ctx) => {
     ctx.reply('Usage: /redeem CODE', { reply_markup: mainMenu } as any);
     return;
   }
-  const state = loadState();
-  const codes = state.__codes || {};
+  const codes = userState.__codes || {};
   const entry = codes[code];
+  const used = entry?.usedBy || [];
+  const idStr = id || '';
+  const alreadyUsed = used.includes(idStr);
   if (!entry) {
     ctx.reply(`❌ Code *${code}* not found or already used.`, { parse_mode: 'Markdown', reply_markup: mainMenu } as any);
     return;
   }
-  const used = entry.usedBy || [];
   if (used.length >= (entry.uses || 1)) {
     ctx.reply(`❌ Code *${code}* has no uses left.`, { parse_mode: 'Markdown', reply_markup: mainMenu } as any);
     return;
@@ -1189,19 +1199,17 @@ bot.command('redeem', async (ctx) => {
     if (entry.kind === 'trial') {
       const days = entry.days || 3;
       userState[id].trialEndsAt = new Date(Date.now() + days * 86400000).toISOString();
-      used.push(id);
-      state[id] = userState[id];
-      state.__codes = codes;
-      saveState(state);
+      if (!alreadyUsed) used.push(id);
+      userState.__codes = codes;
+      saveState(userState);
       ctx.reply(`🎁 Trial activated: *${days} days of PRO*! Enjoy all premium marketing tools.`, { parse_mode: 'Markdown', reply_markup: mainMenu } as any);
     } else if (entry.kind === 'months') {
       userState[id].plan = 'pro';
       const months = entry.months;
       userState[id].proUntil = new Date(Date.now() + months * 30 * 86400000).toISOString();
-      used.push(id);
-      state[id] = userState[id];
-      state.__codes = codes;
-      saveState(state);
+      if (!alreadyUsed) used.push(id);
+      userState.__codes = codes;
+      saveState(userState);
       ctx.reply(`🎉 Code redeemed: *${months} month(s) of PRO*! Welcome aboard. 🚀`, { parse_mode: 'Markdown', reply_markup: mainMenu } as any);
     } else {
       ctx.reply(`❌ Unknown code type.`, { reply_markup: mainMenu } as any);
@@ -1217,8 +1225,8 @@ bot.command('mkcode', (ctx) => {
   }
   const args = (ctx.message as any).text.split(' ').slice(1);
   // e.g. /mkcode trial 7 10  |  /mkcode 1mo 5 [COUNT] [USES]
-  const state = loadState();
-  const codes = state.__codes || {};
+  const codes = userState.__codes || {};
+  userState.__codes = codes;
   let created = 0;
   const make = (code: string, entry: any) => {
     const existing = Object.keys(codes).length;
@@ -1244,16 +1252,15 @@ bot.command('mkcode', (ctx) => {
     ctx.reply('Usage: /mkcode trial <DAYS> [COUNT] [USES]  OR  /mkcode 1mo [COUNT] [USES]', { reply_markup: mainMenu } as any);
     return;
   }
-  state.__codes = codes;
-  saveState(state);
+  userState.__codes = codes;
+  saveState(userState);
   const newCodes = Object.keys(codes).slice(-created);
   ctx.reply(`✅ Created *${created}* code(s):\n${newCodes.join('\n')}\n\nCustomers redeem with /redeem CODE`, { parse_mode: 'Markdown', reply_markup: mainMenu } as any);
 });
 
 bot.command('codes', (ctx) => {
   if (!isAdmin(ctx.from?.id?.toString())) { ctx.reply('⛔ Admin only.', { reply_markup: mainMenu } as any); return; }
-  const state = loadState();
-  const codes = state.__codes || {};
+  const codes = userState.__codes || {};
   const list = Object.entries(codes).map(([code, e]: any) =>
     `• *${code}* — ${e.kind === 'trial' ? `${e.days}d trial` : `${e.months || 1}mo`} · uses ${(e.usedBy || []).length}/${e.uses || 1}`
   ).join('\n');
@@ -1263,12 +1270,11 @@ bot.command('codes', (ctx) => {
 bot.command('revokecode', (ctx) => {
   if (!isAdmin(ctx.from?.id?.toString())) { ctx.reply('⛔ Admin only.', { reply_markup: mainMenu } as any); return; }
   const code = (ctx.message as any).text.split(' ').slice(1).join(' ').toUpperCase().trim();
-  const state = loadState();
-  const codes = state.__codes || {};
+  const codes = userState.__codes || {};
   if (!code || !codes[code]) { ctx.reply('Usage: /revokecode CODE', { reply_markup: mainMenu } as any); return; }
   delete codes[code];
-  state.__codes = codes;
-  saveState(state);
+  userState.__codes = codes;
+  saveState(userState);
   ctx.reply(`♻️ Code *${code}* revoked.`, { parse_mode: 'Markdown', reply_markup: mainMenu } as any);
 });
 
@@ -1276,13 +1282,11 @@ bot.command('settrial', (ctx) => {
   if (!isAdmin(ctx.from?.id?.toString())) { ctx.reply('⛔ Admin only.', { reply_markup: mainMenu } as any); return; }
   const days = parseInt((ctx.message as any).text.split(' ').slice(1)[0]);
   if (days) {
-    const state = loadState();
-    state.__trialDays = days;
-    saveState(state);
+    userState.__trialDays = days;
+    saveState(userState);
     ctx.reply(`🎁 Default trial set to *${days} days*.`, { parse_mode: 'Markdown', reply_markup: mainMenu } as any);
   } else {
-    const state = loadState();
-    const days = state.__trialDays || 3;
+    const days = userState.__trialDays || 3;
     ctx.reply(`🎁 Default trial is currently *${days} days*. Use /settrial <DAYS> (1-30).`, { parse_mode: 'Markdown', reply_markup: mainMenu } as any);
   }
 });
@@ -1303,8 +1307,7 @@ bot.action(/^plan_/, async (ctx) => {
 bot.action('trial_claim', async (ctx) => {
   const id = ctx.from?.id?.toString();
   await ctx.answerCbQuery('Claiming trial...');
-  const state = loadState();
-  const days = state.__trialDays || 3;
+  const days = userState.__trialDays || 3;
   if (id) {
     userState[id] = userState[id] || {};
     userState[id].trialEndsAt = new Date(Date.now() + days * 86400000).toISOString();

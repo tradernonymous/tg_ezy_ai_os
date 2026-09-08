@@ -24,5 +24,14 @@
   "live_metrics": "实时数据",
   "quick_actions": "快捷操作",
   "chat_assistant": "💬 AI 助手",
-  "ask_anything": "询问任何关于潜在客户的问题..."
+  "ask_anything": "询问任何关于潜在客户的问题...",
+  "leads": "潜在客户",
+  "leads_sub": "活跃销售管道",
+  "ai_conversations": "AI 对话",
+  "ai_sub": "今日生成",
+  "plan_sub": "订阅级别",
+  "th_name": "姓名",
+  "th_stage": "阶段",
+  "th_telegram": "Telegram ID",
+  "th_created": "创建"
 }
