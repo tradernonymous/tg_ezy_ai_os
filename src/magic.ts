@@ -25,7 +25,7 @@ function readJson(): Record<string, MagicEntry> {
     if (!raw) return {};
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch (e) {
+  } catch {
     return {};
   }
 }

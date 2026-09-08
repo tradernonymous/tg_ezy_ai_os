@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { dataDir, saveState, loadState } from './stateStore';
+import { dataDir } from './stateStore';
 
 // ---------- Unified multi-platform inbox (simulated adapters) ----------
 
@@ -26,13 +26,6 @@ export interface Conversation {
   messages: ConvMessage[];
 }
 
-const CHANNEL_META: Record<Channel, { emoji: string; label: string }> = {
-  email: { emoji: '📧', label: 'Email' },
-  whatsapp: { emoji: '💬', label: 'WhatsApp' },
-  telegram: { emoji: '✈️', label: 'Telegram' },
-  tiktok: { emoji: '🎵', label: 'TikTok' },
-  meta: { emoji: '🧿', label: 'Meta' },
-};
 
 function convsPath(): string {
   return path.join(dataDir(), 'conversations.json');

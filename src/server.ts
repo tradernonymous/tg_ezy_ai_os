@@ -63,14 +63,14 @@ app.post("/api/billing/webhook", express.raw({ type: () => true, limit: "2mb" })
     let event: any;
     try {
       event = JSON.parse(raw);
-    } catch (e) {
+    } catch {
       res.status(400).json({ error: "Invalid payload" });
       return;
     }
     const account = await handleStripeWebhook(event);
     if (account) console.log(`[billing] webhook activated ${account.plan} for ${account.id}`);
     res.json({ received: true });
-  } catch (err) {
+  } catch {
     res.status(400).json({ error: "Invalid payload" });
   }
 });
@@ -181,7 +181,7 @@ app.get("/health", (_req, res) => {
     const state = loadState();
     const ok = state && typeof state === "object";
     res.status(ok ? 200 : 503).json({ status: ok ? "ok" : "degraded", uptime: process.uptime() });
-  } catch (e) {
+  } catch {
     res.status(503).json({ status: "degraded", error: "state unreadable" });
   }
 });
@@ -436,7 +436,7 @@ app.get("/api/leads/:id", requireAuth, async (req, res) => {
     const found = leads.find((l) => l.id === req.params.id);
     if (!found) return res.status(404).json({ error: "Lead not found" });
     res.json(found);
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch lead" });
   }
 });
@@ -464,7 +464,7 @@ app.patch("/api/leads/:id", requireAuth, async (req, res) => {
     const updated = await updateLead(String(req.params.id), body);
     if (!updated) return res.status(404).json({ error: "Lead not found" });
     res.json(updated);
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Failed to update lead" });
   }
 });
@@ -477,7 +477,7 @@ app.delete("/api/leads/:id", requireAuth, async (req, res) => {
     const deleted = await deleteLead(String(req.params.id));
     if (!deleted) return res.status(404).json({ error: "Lead not found" });
     res.json({ deleted: true, id: req.params.id });
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Failed to delete lead" });
   }
 });
@@ -582,7 +582,7 @@ app.get("/api/conversations", requireAuth, (_req, res) => {
     seedIfEmpty();
     const channel = validChannel(String(_req.query.channel || ""));
     res.json(getConversations(account.id, channel));
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch conversations" });
   }
 });
@@ -594,7 +594,7 @@ app.get("/api/conversations/:id", requireAuth, (req, res) => {
     const conv = getConversation(String(req.params.id));
     if (!conv || (conv.accountId && conv.accountId !== account.id)) return res.status(404).json({ error: "Conversation not found" });
     res.json(conv);
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch conversation" });
   }
 });
@@ -606,7 +606,7 @@ app.post("/api/conversations/:id/read", requireAuth, (req, res) => {
     const conv = markRead(String(req.params.id));
     if (!conv || (conv.accountId && conv.accountId !== account.id)) return res.status(404).json({ error: "Conversation not found" });
     res.json({ ok: true, unread: 0 });
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Failed to update conversation" });
   }
 });
@@ -621,7 +621,7 @@ app.post("/api/conversations/:id/reply", requireAuth, (req, res) => {
     const conv = reply(String(req.params.id), text);
     if (!conv || (conv.accountId && conv.accountId !== account.id)) return res.status(404).json({ error: "Conversation not found" });
     res.json({ ok: true, conversation: conv });
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Failed to reply" });
   }
 });
@@ -633,7 +633,7 @@ app.get("/api/inbox", requireAuth, (_req, res) => {
     const totals = unreadTotals(account.id);
     const view = tierIndex(account.plan) >= 4 ? "full" : "summary";
     res.json({ ...totals, view });
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch inbox" });
   }
 });
@@ -684,7 +684,7 @@ app.post("/api/billing/checkout", requireAuth, async (req, res) => {
     const result = await createCheckout(account, tier, provider);
     if (result.status === "error") return res.status(400).json({ error: result.error });
     res.json(result);
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Billing failed" });
   }
 });
@@ -697,7 +697,7 @@ app.post("/api/billing/confirm", requireAuth, async (req, res) => {
     const result = await confirmSession(account, sessionId);
     if (result && "error" in result) return res.status(400).json({ error: result.error });
     res.json({ status: "ok", plan: (result as Account).plan, planUntil: (result as Account).planUntil });
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Billing failed" });
   }
 });

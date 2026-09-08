@@ -1,5 +1,6 @@
 import { test, before, beforeEach, after } from 'node:test';
 import assert from 'node:assert/strict';
+import * as crypto from 'node:crypto';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -17,7 +18,6 @@ beforeEach(() => {
 
 // Minimal Stripe look-alike: answers POST /v1/checkout/sessions and GET /v1/checkout/sessions/:id
 let sessions: Record<string, any> = {};
-let server: http.Server;
 let base = '';
 let lastBody = '';
 const paidSession = () => ({
@@ -28,7 +28,7 @@ const paidSession = () => ({
   url: 'https://checkout.stripe.com/pay/cs_test_123',
 });
 
-server = http.createServer((req, res) => {
+const server = http.createServer((req, res) => {
   let body = '';
   req.on('data', (c) => (body += c));
   req.on('end', () => {
@@ -136,7 +136,6 @@ test('billing: USDT pending ledger records and lists entries', () => {
 });
 
 test('billing: stripe signature verification', () => {
-  const crypto = require('crypto') as typeof import('crypto');
   const secret = 'whsec_test';
   const payload = '{"type":"checkout.session.completed"}';
   const ts = String(Math.floor(Date.now() / 1000));
@@ -148,7 +147,6 @@ test('billing: stripe signature verification', () => {
 });
 
 test('billing: stripe signature rejects replayed and future-dated events', () => {
-  const crypto = require('crypto') as typeof import('crypto');
   const secret = 'whsec_test';
   const payload = '{"type":"checkout.session.completed"}';
   const sign = (ts: number) =>

@@ -60,7 +60,7 @@ function strippe(pathname: string, init: Record<string, any> = {}): Promise<any>
     let data: any = {};
     try {
       data = text ? JSON.parse(text) : {};
-    } catch (e) {
+    } catch {
       data = { raw: text.slice(0, 500) };
     }
     if (!r.ok) throw new Error(data?.error?.message || `Stripe ${r.status}: ${text.slice(0, 300)}`);
@@ -198,7 +198,7 @@ function readPayments(): PendingPayment[] {
     const raw = fs.readFileSync(paymentsPath(), 'utf-8').trim();
     const parsed = JSON.parse(raw || '[]');
     return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
+  } catch {
     return [];
   }
 }

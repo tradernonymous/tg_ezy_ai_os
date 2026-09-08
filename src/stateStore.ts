@@ -16,7 +16,7 @@ function parseJson(raw: string): Record<string, any> | null {
   try {
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -28,7 +28,7 @@ export function loadState(): Record<string, any> {
     const raw = fs.readFileSync(p, 'utf-8').trim();
     if (!raw) return {};
     return parseJson(raw) || {};
-  } catch (e) {
+  } catch {
     return {};
   }
 }
@@ -52,7 +52,7 @@ export function loadStateWithRecovery(): { state: Record<string, any>; recovered
         console.warn('[stateStore] Recovered state.json from .bak backup.');
         return { state: recovered, recovered: true };
       }
-    } catch (e2) {
+    } catch {
       // fall through
     }
     console.error('[stateStore] state.json corrupt and no valid backup; starting fresh.', e);
@@ -68,7 +68,7 @@ export function saveState(state: Record<string, any>): boolean {
     if (fs.existsSync(p)) {
       try {
         fs.copyFileSync(p, p + '.bak');
-      } catch (e) {
+      } catch {
         // backup is best-effort
       }
     }

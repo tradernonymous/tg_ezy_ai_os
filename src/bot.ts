@@ -1,4 +1,4 @@
-import { Telegraf } from 'telegraf';
+import { Telegraf , Context } from 'telegraf';
 import * as dotenv from 'dotenv';
 import * as os from 'os';
 import * as path from 'path';
@@ -12,6 +12,17 @@ import { getAccountByProviderKey } from './accountStore';
 import { createCheckoutForChatId, activateAccount, priceLabel, usdtConfigured } from './billing';
 
 dotenv.config();
+
+// Telegraf hands hears/action handlers a narrowed context carrying `match`;
+// the base Context type does not declare it. This alias keeps handlers typed
+// without reaching for `any`.
+type BotCtx = Context & { match?: RegExpMatchArray | null };
+
+// `ctx.message` is a union; only some members have `text`.
+function messageText(ctx: BotCtx): string {
+  const m = ctx.message;
+  return m && 'text' in m ? String(m.text ?? '') : '';
+}
 
 const bot = new Telegraf(process.env.BOT_TOKEN || '');
 
@@ -32,18 +43,13 @@ function loadLang(langCode: string): Record<string, string> {
   try {
     const raw = fs.readFileSync(path.resolve(__dirname, '..', 'public', 'lang', `${langCode}.json`), 'utf-8');
     return JSON.parse(raw);
-  } catch (e) {
+  } catch {
     return {};
   }
 }
 
-function t(id: string, langCode?: string): string {
-  const code = langCode || 'en';
-  const lang = loadLang(code);
-  return lang[id] || id;
-}
 
-function getUid(ctx: any): string {
+function getUid(ctx: BotCtx): string {
   return ctx?.from?.id ? ctx.from.id.toString() : '';
 }
 
@@ -52,7 +58,6 @@ const ADMIN_TELEGRAM_ID = (process.env.ADMIN_TELEGRAM_ID || '').toString();
 const PRO_ACCESS_IDS = (process.env.PRO_ACCESS_IDS || '').split(',').map((s) => s.trim()).filter(Boolean);
 import { PLANS as ALL_PLANS, mapLegacy, tierIndex, isTier } from './plans';
 const PLANS = ALL_PLANS.map((p) => ({ tier: p.tier, label: p.label, price: p.price.replace('/mo', ''), features: p.features.join(', ') }));
-const PRO_FEATURES = ['📝 Content', '✉️ Campaign', '🔑 Keywords', '🧲 Lead Magnet', '⚙️ Workflow', '📈 Growth', '📦 Export CSV'];
 
 function isPayingUser(id?: string): boolean {
   if (!id) return false;
@@ -94,7 +99,7 @@ function getPlanLabel(state: any): string {
   return 'Free';
 }
 
-const proGate = (ctx: any, premiumAction: () => any) => {
+const proGate = (ctx: Context, premiumAction: () => any) => {
   const id = getUid(ctx);
   if (!isPayingUser(id)) {
     ctx.reply('🔒 *This is a PRO feature.*\n\nUpgrade with /plans or claim your free trial to unlock Content Studio, Campaigns, Keywords, Lead Magnets, Exports & more.', { parse_mode: 'Markdown', reply_markup: MENUS.main((s) => s) } as any);
@@ -105,7 +110,7 @@ const proGate = (ctx: any, premiumAction: () => any) => {
 
 // ---------- Keyboard helper -------------------------------------------------
 
-function showMenu(ctx: any, menuId: string): any {
+function showMenu(ctx: Context, menuId: string): any {
   const id = getUid(ctx);
   const lang = id ? userState[id]?.lang : undefined;
   const l = localize(lang);
@@ -119,13 +124,13 @@ function showMenu(ctx: any, menuId: string): any {
   return { reply_markup: MENUS[menuId](l) };
 }
 
-function backMenu(ctx: any): string {
+function backMenu(ctx: BotCtx): string {
   const id = getUid(ctx);
   const cur = id ? userState[id]?.menu : undefined;
   return (cur && MENU_PARENT[cur]) || 'main';
 }
 
-function toMain(ctx: any): void {
+function toMain(ctx: BotCtx): void {
   const id = getUid(ctx);
   if (id && userState[id]) {
     const prev = userState[id];
@@ -140,7 +145,7 @@ function toMain(ctx: any): void {
 // ---------- Handler registry (single source of truth) -----------------------
 
 const handledLabels = new Set<string>();
-function hearsMenu(label: string, fn: (ctx: any) => any): void {
+function hearsMenu(label: string, fn: (ctx: BotCtx) => any): void {
   handledLabels.add(label);
   bot.hears(labelVariants(label) as any, fn);
 }
@@ -180,7 +185,7 @@ function guidedRow(): Record<string, any> {
   };
 }
 
-function followUpRow(topic: string): Record<string, any> {
+function followUpRow(_topic: string): Record<string, any> {
   return {
     inline_keyboard: [
       [{ text: '✍️ More Hooks', callback_data: 'fup_hooks' }, { text: '🏷️ Captions', callback_data: 'fup_captions' }],
@@ -213,7 +218,7 @@ const TOOL_GENERATORS: Record<string, { title: (t: string) => string; build: (t:
   leadmagnet: { title: (t) => `🧲 Lead Magnets — ${t}`, build: (t) => `Suggest 5 high-converting lead magnet ideas for "${t}" (ebook, checklist, template, webinar, tool). For each: format, main promise/benefit, and how to deliver.` },
 };
 
-function defaultTopic(ctx: any): string {
+function defaultTopic(ctx: BotCtx): string {
   const id = getUid(ctx);
   const s = id ? userState[id] : undefined;
   if (s?.business?.name) return s.business.name;
@@ -221,7 +226,7 @@ function defaultTopic(ctx: any): string {
   return 'our product';
 }
 
-function startGuided(ctx: any, tool: string): void {
+function startGuided(ctx: Context, tool: string): void {
   const id = getUid(ctx);
   if (id) {
     userState[id] = userState[id] || {};
@@ -232,7 +237,7 @@ function startGuided(ctx: any, tool: string): void {
   ctx.reply(`✍️ *Tell me your topic*\n\nWhat are we writing about? (product, offer, niche, or paste content to review)\n\nOr tap *⚡ Quick Generate* for a default topic.`, { parse_mode: 'Markdown', reply_markup: guidedRow() } as any);
 }
 
-async function runGuided(ctx: any, tool: string, topic: string): Promise<void> {
+async function runGuided(ctx: Context, tool: string, topic: string): Promise<void> {
   const id = getUid(ctx);
   rememberTopic(id, topic);
   const gen = TOOL_GENERATORS[tool];
@@ -248,7 +253,7 @@ async function runGuided(ctx: any, tool: string, topic: string): Promise<void> {
   }
 }
 
-function cancelFlows(ctx: any, msg = '🚫 Cancelled. What next?'): void {
+function cancelFlows(ctx: Context, msg = '🚫 Cancelled. What next?'): void {
   const id = getUid(ctx);
   if (id) {
     userState[id] = userState[id] || {};
@@ -269,7 +274,7 @@ const fupAliases: Record<string, string> = {
   fup_email: 'email',
 };
 
-bot.action(/^fup_/, async (ctx: any) => {
+bot.action(/^fup_/, async (ctx: BotCtx) => {
   const id = getUid(ctx);
   const label = (ctx.match?.[0] as string) || '';
   await ctx.answerCbQuery();
@@ -291,11 +296,11 @@ bot.action(/^fup_/, async (ctx: any) => {
   }
 });
 
-bot.action('g_cancel', async (ctx: any) => {
+bot.action('g_cancel', async (ctx: BotCtx) => {
   await ctx.answerCbQuery('Cancelled');
   cancelFlows(ctx);
 });
-bot.action('g_quick', async (ctx: any) => {
+bot.action('g_quick', async (ctx: BotCtx) => {
   await ctx.answerCbQuery('Generating with default topic...');
   const id = getUid(ctx);
   const tool = id ? userState[id]?.guided?.tool : undefined;
@@ -322,17 +327,17 @@ const LANG_REPLIES: Record<string, string> = {
   zh: '🇨🇳 语言已设置为中文。',
 };
 
-bot.command('lang', (ctx: any) => {
+bot.command('lang', (ctx: BotCtx) => {
   ctx.reply('🌐 Choose your language:', showMenu(ctx, 'langSub') as any);
 });
-hearsMenu('🌐 Language', (ctx: any) => {
+hearsMenu('🌐 Language', (ctx: BotCtx) => {
   ctx.reply('🌐 Choose your language:', showMenu(ctx, 'langSub') as any);
 });
 for (const code of ['en', 'es', 'fr', 'de', 'zh'] as const) {
   const flag = code === 'en' ? '🇬🇧' : code === 'es' ? '🇪🇸' : code === 'fr' ? '🇫🇷' : code === 'de' ? '🇩🇪' : '🇨🇳';
   const langLabel = `${flag} ${code.toUpperCase()}`;
   handledLabels.add(langLabel);
-  bot.hears(langLabel, (ctx: any) => {
+  bot.hears(langLabel, (ctx: BotCtx) => {
     const id = getUid(ctx);
     if (id) {
       userState[id] = userState[id] || {};
@@ -386,22 +391,22 @@ const botCommands = [
 
 // ---------- Navigation ----------------------------------------------------------
 
-hearsMenu('🏠 Main Menu', (ctx: any) => {
+hearsMenu('🏠 Main Menu', (ctx: BotCtx) => {
   ctx.deleteMessage().catch(() => undefined);
   ctx.reply('🏠 Main menu:', showMenu(ctx, 'main') as any);
 });
-hearsMenu('⬅️ Back', (ctx: any) => {
+hearsMenu('⬅️ Back', (ctx: BotCtx) => {
   const parent = backMenu(ctx);
   ctx.reply(parent === 'main' ? '🏠 Main menu:' : '⬅️ Back:', showMenu(ctx, parent) as any);
 });
-bot.command('back', (ctx: any) => {
+bot.command('back', (ctx: BotCtx) => {
   const parent = backMenu(ctx);
   ctx.reply(parent === 'main' ? '🏠 Main menu:' : '⬅️ Back:', showMenu(ctx, parent) as any);
 });
 
 // ---------- /start --------------------------------------------------------------
 
-bot.start((ctx: any) => {
+bot.start((ctx: BotCtx) => {
   const id = getUid(ctx);
   if (id && !userState[id]) userState[id] = { type: 'idle' };
   saveState(userState);
@@ -415,7 +420,7 @@ bot.start((ctx: any) => {
 
 // ---------- Leads & stats ----------------------------------------------------------
 
-bot.command('stats', async (ctx: any) => {
+bot.command('stats', async (ctx: BotCtx) => {
   try {
     const leads = await getLeads();
     const total = leads.length;
@@ -435,7 +440,7 @@ bot.command('stats', async (ctx: any) => {
   }
 });
 
-bot.command('leads', async (ctx: any) => {
+bot.command('leads', async (ctx: BotCtx) => {
   try {
     const leads = await getLeads();
     const stages = ['new', 'contacted', 'qualified', 'closed'];
@@ -447,7 +452,7 @@ bot.command('leads', async (ctx: any) => {
   }
 });
 
-bot.command('deletelead', async (ctx: any) => {
+bot.command('deletelead', async (ctx: BotCtx) => {
   const telegramId = (ctx.message as any).text.split(' ').slice(1).join(' ').trim();
   if (!telegramId) {
     ctx.reply('Usage: /deletelead <telegramId>', showMenu(ctx, 'main') as any);
@@ -467,24 +472,24 @@ bot.command('deletelead', async (ctx: any) => {
   }
 });
 
-bot.command('ping', (ctx: any) => ctx.reply('pong'));
+bot.command('ping', (ctx: BotCtx) => ctx.reply('pong'));
 
-bot.command('addlead', (ctx: any) => {
+bot.command('addlead', (ctx: BotCtx) => {
   const id = getUid(ctx);
   if (id) userState[id] = { type: 'name' };
   ctx.reply('Please enter the lead\'s name:', { reply_markup: forceReply } as any);
 });
 
-hearsMenu('➕ Add Lead', (ctx: any) => {
+hearsMenu('➕ Add Lead', (ctx: BotCtx) => {
   const id = getUid(ctx);
   if (id) userState[id] = { type: 'name' };
   ctx.reply('Please enter the lead\'s name:', { reply_markup: forceReply } as any);
 });
 
-hearsMenu('📊 Stats & Leads', (ctx: any) => {
+hearsMenu('📊 Stats & Leads', (ctx: BotCtx) => {
   ctx.reply('📊 Choose an option:', showMenu(ctx, 'statsLeads') as any);
 });
-hearsMenu('📊 Stats', async (ctx: any) => {
+hearsMenu('📊 Stats', async (ctx: BotCtx) => {
   try {
     const leads = await getLeads();
     const total = leads.length;
@@ -498,7 +503,7 @@ hearsMenu('📊 Stats', async (ctx: any) => {
     ctx.reply(`⚠️ Stats error (${e?.message ?? 'error'})`, showMenu(ctx, 'statsLeads') as any);
   }
 });
-hearsMenu('📂 Leads List', async (ctx: any) => {
+hearsMenu('📂 Leads List', async (ctx: BotCtx) => {
   try {
     const leads = await getLeads();
     const stages = ['new', 'contacted', 'qualified', 'closed'];
@@ -509,13 +514,13 @@ hearsMenu('📂 Leads List', async (ctx: any) => {
     ctx.reply(`⚠️ Could not load leads (${e?.message ?? 'error'})`, showMenu(ctx, 'statsLeads') as any);
   }
 });
-hearsMenu('📈 Pipeline', (ctx: any) => {
+hearsMenu('📈 Pipeline', (ctx: BotCtx) => {
   ctx.reply('📈 Pipeline overview — view full kanban board at /dashboard', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'statsLeads').reply_markup } as any);
 });
 
 // ---------- /stage ----------------------------------------------------------------
 
-bot.command('stage', async (ctx: any) => {
+bot.command('stage', async (ctx: BotCtx) => {
   const id = getUid(ctx);
   const parts = (ctx.message as any).text.split(' ').slice(1).join(' ').trim().toLowerCase();
   const valid = ['new', 'contacted', 'qualified', 'closed'];
@@ -537,7 +542,7 @@ const stageActions: Record<string, string> = {
   stage_closed: 'closed',
 };
 for (const [action, stageName] of Object.entries(stageActions)) {
-  bot.action(action, async (ctx: any) => {
+  bot.action(action, async (ctx: BotCtx) => {
     await ctx.answerCbQuery(`${stageName} selected`);
     const id = getUid(ctx);
     if (id && userState[id]?.type === 'stage') {
@@ -566,7 +571,7 @@ const searchStageActions: Record<string, string> = {
   search_stage_closed: 'closed',
 };
 for (const [action, stageName] of Object.entries(searchStageActions)) {
-  bot.action(action, async (ctx: any) => {
+  bot.action(action, async (ctx: BotCtx) => {
     await ctx.answerCbQuery(`Filter: ${stageName}`);
     try {
       const allLeads = await getLeads();
@@ -581,14 +586,14 @@ for (const [action, stageName] of Object.entries(searchStageActions)) {
 
 // ---------- Marketing submenu ------------------------------------------------
 
-hearsMenu('💼 Marketing', (ctx: any) => {
+hearsMenu('💼 Marketing', (ctx: BotCtx) => {
   ctx.reply('💼 Marketing toolkit — choose a tool:', showMenu(ctx, 'marketing') as any);
 });
 
-hearsMenu('💳 Plan', (ctx: any) => {
+hearsMenu('💳 Plan', (ctx: BotCtx) => {
   ctx.reply('💳 Choose a plan option:', showMenu(ctx, 'plan') as any);
 });
-hearsMenu('📊 Current Plan', async (ctx: any) => {
+hearsMenu('📊 Current Plan', async (ctx: BotCtx) => {
   try {
     const id = getUid(ctx);
     const label = getPlanLabel(id ? userState[id] : undefined);
@@ -598,57 +603,57 @@ hearsMenu('📊 Current Plan', async (ctx: any) => {
     ctx.reply(`⚠️ Plan error (${e?.message ?? 'error'})`, showMenu(ctx, 'plan') as any);
   }
 });
-hearsMenu('💳 Set Free', (ctx: any) => {
+hearsMenu('💳 Set Free', (ctx: BotCtx) => {
   const id = getUid(ctx);
   if (id) { userState[id] = userState[id] || {}; userState[id].plan = 'free'; delete userState[id].proUntil; saveState(userState); }
   ctx.reply('💳 Plan updated to *FREE*', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
 });
-hearsMenu('💳 Set Pro', (ctx: any) => {
+hearsMenu('💳 Set Pro', (ctx: BotCtx) => {
   const id = getUid(ctx);
   if (id) { userState[id] = userState[id] || {}; userState[id].plan = 'navigator'; saveState(userState); }
   ctx.reply('💳 Plan updated to *NAVIGATOR*', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
 });
-hearsMenu('💳 Set Enterprise', (ctx: any) => {
+hearsMenu('💳 Set Enterprise', (ctx: BotCtx) => {
   const id = getUid(ctx);
   if (id) { userState[id] = userState[id] || {}; userState[id].plan = 'thinker'; saveState(userState); }
   ctx.reply('💳 Plan updated to *THINKER*', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
 });
 
-hearsMenu('🎭 Persona', (ctx: any) => {
+hearsMenu('🎭 Persona', (ctx: BotCtx) => {
   ctx.reply('🎭 Choose persona setting:', showMenu(ctx, 'persona') as any);
 });
-hearsMenu('🎭 Tone', (ctx: any) => {
+hearsMenu('🎭 Tone', (ctx: BotCtx) => {
   const id = getUid(ctx);
   const current = (id && userState[id]?.persona?.tone) ? userState[id].persona.tone : 'professional';
   ctx.reply(`🎭 Current tone: *${current}*\nSend new tone value (e.g., friendly, professional, witty)`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'persona').reply_markup } as any);
   if (id) { userState[id] = userState[id] || {}; userState[id].type = 'persona_tone'; saveState(userState); }
 });
-hearsMenu('🎭 Audience', (ctx: any) => {
+hearsMenu('🎭 Audience', (ctx: BotCtx) => {
   const id = getUid(ctx);
   const current = (id && userState[id]?.persona?.audience) ? userState[id].persona.audience : 'general';
   ctx.reply(`🎭 Current audience: *${current}*\nSend new audience value (e.g., general, developers, marketers)`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'persona').reply_markup } as any);
   if (id) { userState[id] = userState[id] || {}; userState[id].type = 'persona_audience'; saveState(userState); }
 });
-hearsMenu('🎭 Style', (ctx: any) => {
+hearsMenu('🎭 Style', (ctx: BotCtx) => {
   const id = getUid(ctx);
   const current = (id && userState[id]?.persona?.style) ? userState[id].persona.style : 'clear';
   ctx.reply(`🎭 Current style: *${current}*\nSend new style value (e.g., clear, concise, detailed)`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'persona').reply_markup } as any);
   if (id) { userState[id] = userState[id] || {}; userState[id].type = 'persona_style'; saveState(userState); }
 });
 
-hearsMenu('🔍 Meta', (ctx: any) => ctx.reply('🔍 SEO Meta — describe your topic:', showMenu(ctx, 'metaSub') as any));
-hearsMenu('🔍 Generate Meta', (ctx: any) => startGuided(ctx, 'meta'));
+hearsMenu('🔍 Meta', (ctx: BotCtx) => ctx.reply('🔍 SEO Meta — describe your topic:', showMenu(ctx, 'metaSub') as any));
+hearsMenu('🔍 Generate Meta', (ctx: BotCtx) => startGuided(ctx, 'meta'));
 
-hearsMenu('🗺️ Value', (ctx: any) => ctx.reply('🗺️ Value Map — describe your product:', showMenu(ctx, 'valueSub') as any));
-hearsMenu('🗺️ Generate Map', (ctx: any) => startGuided(ctx, 'value'));
+hearsMenu('🗺️ Value', (ctx: BotCtx) => ctx.reply('🗺️ Value Map — describe your product:', showMenu(ctx, 'valueSub') as any));
+hearsMenu('🗺️ Generate Map', (ctx: BotCtx) => startGuided(ctx, 'value'));
 
-hearsMenu('✏️ Review', (ctx: any) => ctx.reply('✏️ Content Review — paste content to review:', showMenu(ctx, 'reviewSub') as any));
-hearsMenu('✏️ Review Content', (ctx: any) => startGuided(ctx, 'review'));
+hearsMenu('✏️ Review', (ctx: BotCtx) => ctx.reply('✏️ Content Review — paste content to review:', showMenu(ctx, 'reviewSub') as any));
+hearsMenu('✏️ Review Content', (ctx: BotCtx) => startGuided(ctx, 'review'));
 
-hearsMenu('📈 Growth', (ctx: any) => {
+hearsMenu('📈 Growth', (ctx: BotCtx) => {
   ctx.reply('📈 *Growth Prompts* — battle-tested angles for ads, SEO, email, CRO, content.', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'growthSub').reply_markup } as any);
 });
-hearsMenu('📈 Show Prompts', async (ctx: any) => {
+hearsMenu('📈 Show Prompts', async (ctx: BotCtx) => {
   try {
     const ai = await safeGenerateResponse('List 5 battle-tested growth marketing prompts for paid ads, SEO, email, CRO, and content. Keep each to one line.');
     ctx.reply(`📈 *Growth Prompts Library*\n${ai}`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'growthSub').reply_markup } as any);
@@ -657,7 +662,7 @@ hearsMenu('📈 Show Prompts', async (ctx: any) => {
   }
 });
 
-hearsMenu('📂 Swipe', async (ctx: any) => {
+hearsMenu('📂 Swipe', async (ctx: BotCtx) => {
   try {
     const ai = await safeGenerateResponse('Provide 3 ready-to-use swipe file hooks/headlines for marketing campaigns in English. Include a brief explanation of why each works.');
     ctx.reply(`📂 *Swipe Files*\n${ai}`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'swipeSub').reply_markup } as any);
@@ -665,7 +670,7 @@ hearsMenu('📂 Swipe', async (ctx: any) => {
     ctx.reply(`⚠️ Swipe files error (${e?.message ?? 'error'})`, showMenu(ctx, 'swipeSub') as any);
   }
 });
-hearsMenu('📂 Show Swipe', async (ctx: any) => {
+hearsMenu('📂 Show Swipe', async (ctx: BotCtx) => {
   try {
     const ai = await safeGenerateResponse('Provide 3 ready-to-use swipe file hooks/headlines for marketing campaigns in English. Include a brief explanation of why each works.');
     ctx.reply(`📂 *Swipe Files*\n${ai}`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'swipeSub').reply_markup } as any);
@@ -674,45 +679,45 @@ hearsMenu('📂 Show Swipe', async (ctx: any) => {
   }
 });
 
-hearsMenu('⚙️ Workflow', proGateWrapper((ctx: any) => ctx.reply('⚙️ *Automation Workflows* — trigger actions on stage changes / reminders.', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'workflowSub').reply_markup } as any)));
-hearsMenu('⚙️ Show Workflow', proGateWrapper((ctx: any) => ctx.reply('⚙️ Ready-to-use automation recipes:\n• New lead → welcome + 24h follow-up\n• Contacted → 3-day touch schedule\n• Qualified → send proposal\n• Closed → notify team\n\nManage triggers under ⚙️ Settings → ⚡ Automation Rules.', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'workflowSub').reply_markup } as any)));
+hearsMenu('⚙️ Workflow', proGateWrapper((ctx: BotCtx) => ctx.reply('⚙️ *Automation Workflows* — trigger actions on stage changes / reminders.', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'workflowSub').reply_markup } as any)));
+hearsMenu('⚙️ Show Workflow', proGateWrapper((ctx: BotCtx) => ctx.reply('⚙️ Ready-to-use automation recipes:\n• New lead → welcome + 24h follow-up\n• Contacted → 3-day touch schedule\n• Qualified → send proposal\n• Closed → notify team\n\nManage triggers under ⚙️ Settings → ⚡ Automation Rules.', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'workflowSub').reply_markup } as any)));
 
 // ---------- Content Studio (PRO) ---------------------------------------------
 
-hearsMenu('📝 Content', (ctx: any) => proGate(ctx, () => ctx.reply('📝 *Content Studio* — pick a format:', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'contentSub').reply_markup } as any)));
-hearsMenu('📝 Post', (ctx: any) => proGate(ctx, () => startGuided(ctx, 'post')));
-hearsMenu('📧 Email', (ctx: any) => proGate(ctx, () => startGuided(ctx, 'email')));
-hearsMenu('✍️ Hook', (ctx: any) => proGate(ctx, () => startGuided(ctx, 'hook')));
-hearsMenu('🏷️ Caption', (ctx: any) => proGate(ctx, () => startGuided(ctx, 'caption')));
+hearsMenu('📝 Content', (ctx: BotCtx) => proGate(ctx, () => ctx.reply('📝 *Content Studio* — pick a format:', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'contentSub').reply_markup } as any)));
+hearsMenu('📝 Post', (ctx: BotCtx) => proGate(ctx, () => startGuided(ctx, 'post')));
+hearsMenu('📧 Email', (ctx: BotCtx) => proGate(ctx, () => startGuided(ctx, 'email')));
+hearsMenu('✍️ Hook', (ctx: BotCtx) => proGate(ctx, () => startGuided(ctx, 'hook')));
+hearsMenu('🏷️ Caption', (ctx: BotCtx) => proGate(ctx, () => startGuided(ctx, 'caption')));
 
 // ---------- Campaign (PRO) ----------------------------------------------------
 
-hearsMenu('✉️ Campaign', (ctx: any) => proGate(ctx, () => ctx.reply('✉️ *Campaign Builder* — choose an action:', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'campaignSub').reply_markup } as any)));
-hearsMenu('💡 Ideas', (ctx: any) => proGate(ctx, () => startGuided(ctx, 'ideas')));
-hearsMenu('📰 Launch', (ctx: any) => proGate(ctx, () => startGuided(ctx, 'launch')));
+hearsMenu('✉️ Campaign', (ctx: BotCtx) => proGate(ctx, () => ctx.reply('✉️ *Campaign Builder* — choose an action:', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'campaignSub').reply_markup } as any)));
+hearsMenu('💡 Ideas', (ctx: BotCtx) => proGate(ctx, () => startGuided(ctx, 'ideas')));
+hearsMenu('📰 Launch', (ctx: BotCtx) => proGate(ctx, () => startGuided(ctx, 'launch')));
 
 // ---------- Keywords (PRO) ----------------------------------------------------
 
-hearsMenu('🔑 Keywords', (ctx: any) => proGate(ctx, () => ctx.reply('🔑 *Keyword Research* — describe your niche:', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'keywordsSub').reply_markup } as any)));
-hearsMenu('🔑 Research', (ctx: any) => proGate(ctx, () => startGuided(ctx, 'keywords')));
+hearsMenu('🔑 Keywords', (ctx: BotCtx) => proGate(ctx, () => ctx.reply('🔑 *Keyword Research* — describe your niche:', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'keywordsSub').reply_markup } as any)));
+hearsMenu('🔑 Research', (ctx: BotCtx) => proGate(ctx, () => startGuided(ctx, 'keywords')));
 
 // ---------- Lead Magnet (PRO) -------------------------------------------------
 
-hearsMenu('🧲 Lead Magnet', (ctx: any) => proGate(ctx, () => ctx.reply('🧲 *Lead Magnet Generator* — what do you sell?', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'leadMagnetSub').reply_markup } as any)));
-hearsMenu('🧲 Generate', (ctx: any) => proGate(ctx, () => startGuided(ctx, 'leadmagnet')));
+hearsMenu('🧲 Lead Magnet', (ctx: BotCtx) => proGate(ctx, () => ctx.reply('🧲 *Lead Magnet Generator* — what do you sell?', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'leadMagnetSub').reply_markup } as any)));
+hearsMenu('🧲 Generate', (ctx: BotCtx) => proGate(ctx, () => startGuided(ctx, 'leadmagnet')));
 
-function proGateWrapper(fn: (ctx: any) => any) {
-  return (ctx: any) => proGate(ctx, () => fn(ctx));
+function proGateWrapper(fn: (ctx: BotCtx) => any) {
+  return (ctx: BotCtx) => proGate(ctx, () => fn(ctx));
 }
 
 // ---------- Tools & Auto --------------------------------------------------------
 
-hearsMenu('⚙️ Tools & Auto', (ctx: any) => {
+hearsMenu('⚙️ Tools & Auto', (ctx: BotCtx) => {
   ctx.reply('⚙️ Tools & Automation — pick an option:', showMenu(ctx, 'toolsAuto') as any);
 });
 
 // --- Inbox ---
-hearsMenu('📬 Inbox', async (ctx: any) => {
+hearsMenu('📬 Inbox', async (ctx: BotCtx) => {
   const { total, byChannel } = unreadTotals();
   const lines = Object.entries(byChannel).map(([ch, n]) => `• ${ch}: ${n || 0} unread`).join('\n');
   const port = process.env.PORT || 3000;
@@ -725,7 +730,7 @@ hearsMenu('📬 Inbox', async (ctx: any) => {
     } as any
   );
 });
-bot.command('inbox', async (ctx: any) => {
+bot.command('inbox', async (ctx: BotCtx) => {
   const { total, byChannel } = unreadTotals();
   const lines = Object.entries(byChannel).map(([ch, n]) => `• ${ch}: ${n || 0} unread`).join('\n');
   const port = process.env.PORT || 3000;
@@ -734,21 +739,21 @@ bot.command('inbox', async (ctx: any) => {
 });
 
 // --- Handoff ---
-hearsMenu('🚩 Handoff', async (ctx: any) => {
+hearsMenu('🚩 Handoff', async (ctx: BotCtx) => {
   const id = getUid(ctx);
   if (id) {
     await updateLeadByTelegramId(id, { stage: 'contacted' });
   }
   ctx.reply('🚩 Lead flagged for *human review*. Our team will contact you shortly.', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'toolsAuto').reply_markup } as any);
 });
-bot.command('handoff', async (ctx: any) => {
+bot.command('handoff', async (ctx: BotCtx) => {
   const id = getUid(ctx);
   if (id) await updateLeadByTelegramId(id, { stage: 'contacted' });
   ctx.reply('🚩 Lead flagged for *human review* (handoff requested).', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'toolsAuto').reply_markup } as any);
 });
 
 // --- Remind (guided) ---
-hearsMenu('⏰ Remind', (ctx: any) => {
+hearsMenu('⏰ Remind', (ctx: BotCtx) => {
   const id = getUid(ctx);
   if (id) {
     userState[id] = userState[id] || {};
@@ -758,7 +763,7 @@ hearsMenu('⏰ Remind', (ctx: any) => {
   ctx.reply('⏰ *Reminder*\nIn how many *minutes* should I remind you? (e.g. 30)', { parse_mode: 'Markdown', reply_markup: forceReply } as any);
 });
 
-bot.command('remind', (ctx: any) => {
+bot.command('remind', (ctx: BotCtx) => {
   const args = (ctx.message as any).text.split(' ').slice(1);
   const minutes = parseInt(args[0]);
   const msg = args.slice(1).join(' ');
@@ -772,7 +777,7 @@ bot.command('remind', (ctx: any) => {
 });
 
 // --- Broadcast (admin) ---
-hearsMenu('📣 Broadcast', (ctx: any) => {
+hearsMenu('📣 Broadcast', (ctx: BotCtx) => {
   if (!isAdmin(getUid(ctx))) {
     ctx.reply('⛔ Admin only.', showMenu(ctx, 'toolsAuto') as any);
     return;
@@ -787,9 +792,9 @@ hearsMenu('📣 Broadcast', (ctx: any) => {
 });
 
 // --- Export CSV (PRO) ---
-hearsMenu('📦 Export CSV', (ctx: any) => proGate(ctx, () => exportCsv(ctx)));
-bot.command('export', (ctx: any) => proGate(ctx, () => exportCsv(ctx)));
-async function exportCsv(ctx: any): Promise<void> {
+hearsMenu('📦 Export CSV', (ctx: BotCtx) => proGate(ctx, () => exportCsv(ctx)));
+bot.command('export', (ctx: BotCtx) => proGate(ctx, () => exportCsv(ctx)));
+async function exportCsv(ctx: BotCtx): Promise<void> {
   try {
     const leads = await getLeads();
     const csv = toCsv(leads);
@@ -802,9 +807,9 @@ async function exportCsv(ctx: any): Promise<void> {
 }
 
 // --- Automation Rules ---
-hearsMenu('⚡ Automation Rules', (ctx: any) => showRules(ctx));
-bot.command('rules', (ctx: any) => showRules(ctx));
-function showRules(ctx: any): void {
+hearsMenu('⚡ Automation Rules', (ctx: BotCtx) => showRules(ctx));
+bot.command('rules', (ctx: BotCtx) => showRules(ctx));
+function showRules(ctx: BotCtx): void {
   const id = getUid(ctx);
   const rules = (id && userState[id]?.rules) ? userState[id].rules : { autoStage: true, dailyDigest: false };
   ctx.reply(
@@ -821,7 +826,7 @@ function showRules(ctx: any): void {
     } as any
   );
 }
-bot.action(/^rule_/, async (ctx: any) => {
+bot.action(/^rule_/, async (ctx: BotCtx) => {
   const id = getUid(ctx);
   const rule = (ctx.match?.[0] as string).replace('rule_', '');
   await ctx.answerCbQuery();
@@ -840,11 +845,11 @@ bot.action(/^rule_/, async (ctx: any) => {
 
 // ---------- Settings -------------------------------------------------------------
 
-hearsMenu('⚙️ Settings', (ctx: any) => {
+hearsMenu('⚙️ Settings', (ctx: BotCtx) => {
   ctx.reply('⚙️ Settings — pick an option:', showMenu(ctx, 'settings') as any);
 });
 
-hearsMenu('👤 Profile', (ctx: any) => {
+hearsMenu('👤 Profile', (ctx: BotCtx) => {
   const id = getUid(ctx);
   const u = ctx.from;
   const s = id ? userState[id] : undefined;
@@ -856,7 +861,7 @@ hearsMenu('👤 Profile', (ctx: any) => {
     { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'settings').reply_markup } as any
   );
 });
-bot.command('profile', (ctx: any) => {
+bot.command('profile', (ctx: BotCtx) => {
   const id = getUid(ctx);
   const u = ctx.from;
   const s = id ? userState[id] : undefined;
@@ -866,7 +871,7 @@ bot.command('profile', (ctx: any) => {
 });
 
 // --- Notifications ---
-hearsMenu('🔔 Notifications', (ctx: any) => {
+hearsMenu('🔔 Notifications', (ctx: BotCtx) => {
   const id = getUid(ctx);
   const on = (id && userState[id]?.notifications !== undefined) ? userState[id].notifications : true;
   ctx.reply(
@@ -877,7 +882,7 @@ hearsMenu('🔔 Notifications', (ctx: any) => {
     } as any
   );
 });
-bot.action('notif_toggle', async (ctx: any) => {
+bot.action('notif_toggle', async (ctx: BotCtx) => {
   const id = getUid(ctx);
   await ctx.answerCbQuery();
   if (id) {
@@ -889,9 +894,9 @@ bot.action('notif_toggle', async (ctx: any) => {
 });
 
 // --- Business profile (feeds AI writing with real facts) ---
-hearsMenu('🏢 Business', (ctx: any) => startBusiness(ctx));
-bot.command('business', (ctx: any) => startBusiness(ctx));
-function startBusiness(ctx: any): void {
+hearsMenu('🏢 Business', (ctx: BotCtx) => startBusiness(ctx));
+bot.command('business', (ctx: BotCtx) => startBusiness(ctx));
+function startBusiness(ctx: BotCtx): void {
   const id = getUid(ctx);
   const biz = id ? userState[id]?.business : undefined;
   if (biz?.name && biz?.website) {
@@ -912,7 +917,7 @@ function startBusiness(ctx: any): void {
     ctx.reply('🏢 *Business Profile*\n\nWhat is your business name? (type it, or /skip)', { parse_mode: 'Markdown', reply_markup: forceReply } as any);
   }
 }
-bot.action('biz_edit', async (ctx: any) => {
+bot.action('biz_edit', async (ctx: BotCtx) => {
   const id = getUid(ctx);
   await ctx.answerCbQuery();
   if (id) {
@@ -924,7 +929,7 @@ bot.action('biz_edit', async (ctx: any) => {
 });
 
 // --- Danger zone ---
-hearsMenu('🗑️ Danger Zone', (ctx: any) => {
+hearsMenu('🗑️ Danger Zone', (ctx: BotCtx) => {
   ctx.reply(
     '🗑️ *Danger Zone*\nThis will delete your linked leads and reset your settings. This cannot be undone. Continue?',
     {
@@ -933,7 +938,7 @@ hearsMenu('🗑️ Danger Zone', (ctx: any) => {
     } as any
   );
 });
-bot.action('danger_confirm', async (ctx: any) => {
+bot.action('danger_confirm', async (ctx: BotCtx) => {
   const id = getUid(ctx);
   await ctx.answerCbQuery();
   if (id) {
@@ -949,7 +954,7 @@ bot.action('danger_confirm', async (ctx: any) => {
 
 // ---------- Trading-style commands (EzyAi lineage) -----------------------------
 
-bot.command('watch', (ctx: any) => {
+bot.command('watch', (ctx: BotCtx) => {
   const msg = (ctx.message as any)?.text?.split(' ').slice(1).join(' ').trim();
   const parts = msg ? msg.split(' ') : [];
   const pair = (parts[0] || 'BTCUSD').toUpperCase();
@@ -964,10 +969,10 @@ bot.command('watch', (ctx: any) => {
   }
   ctx.reply(`👁️ Watch started: *${pair}* (${style}/${mode})`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
 });
-bot.hears('👁️ Watch', (ctx: any) => {
+bot.hears('👁️ Watch', (ctx: BotCtx) => {
   ctx.reply('👁️ Watch mode — usage: /watch <PAIR> <STYLE> <MODE>\nExample: /watch BTCUSD intraday safe', { reply_markup: showMenu(ctx, 'main').reply_markup } as any);
 });
-bot.command('fundamentals', async (ctx: any) => {
+bot.command('fundamentals', async (ctx: BotCtx) => {
   const msg = (ctx.message as any)?.text?.split(' ').slice(1).join(' ').trim() || 'BTCUSD';
   try {
     const ai = await safeGenerateResponse(`Provide fundamentals for ${msg}: source links (CoinGecko for crypto, Yahoo Finance for stocks/forex/metals), recent headlines, and a brief summary.`);
@@ -976,14 +981,14 @@ bot.command('fundamentals', async (ctx: any) => {
     ctx.reply(`⚠️ Fundamentals error (${e?.message ?? 'unknown'})`, showMenu(ctx, 'main') as any);
   }
 });
-bot.command('autopilot', (ctx: any) => {
+bot.command('autopilot', (ctx: BotCtx) => {
   const msg = (ctx.message as any)?.text?.split(' ').slice(1).join(' ').trim();
   const parts = msg ? msg.split(' ') : [];
   const style = parts[0] || 'scalping';
   const mode = parts[1] || 'aggressive';
   ctx.reply(`🚀 Autopilot active: *${style} / ${mode}*`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
 });
-bot.command('quote', async (ctx: any) => {
+bot.command('quote', async (ctx: BotCtx) => {
   const msg = (ctx.message as any)?.text?.split(' ').slice(1).join(' ').trim() || 'BTCUSD';
   try {
     const ai = await safeGenerateResponse(`Provide a quick market quote for ${msg}: current price, trend direction, support/resistance, and a brief outlook.`);
@@ -992,13 +997,13 @@ bot.command('quote', async (ctx: any) => {
     ctx.reply(`⚠️ Quote error (${e?.message ?? 'unknown'})`, showMenu(ctx, 'main') as any);
   }
 });
-bot.command('watches', async (ctx: any) => {
+bot.command('watches', async (ctx: BotCtx) => {
   const id = getUid(ctx);
   const userWatches = (id && userState[id]?.watches) ? userState[id].watches : [];
   const text = userWatches.length ? userWatches.map((w: any) => `• *${w.pair}* (${w.style}/${w.mode})`).join('\n') : 'No active watches.';
   ctx.reply(`📋 *Active Watches*\n${text}`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
 });
-bot.command('unwatch', async (ctx: any) => {
+bot.command('unwatch', async (ctx: BotCtx) => {
   const msg = (ctx.message as any)?.text?.split(' ').slice(1).join(' ').trim() || 'BTCUSD';
   const id = getUid(ctx);
   if (id && userState[id]?.watches) {
@@ -1010,7 +1015,7 @@ bot.command('unwatch', async (ctx: any) => {
 
 // ---------- Commands for marketing tools ----------------------------------------
 
-bot.command('plan', (ctx: any) => {
+bot.command('plan', (ctx: BotCtx) => {
   const args = (ctx.message as any).text.split(' ').slice(1);
   const id = getUid(ctx);
   if (args[0] === 'set' && args[1]) {
@@ -1027,7 +1032,7 @@ bot.command('plan', (ctx: any) => {
     ctx.reply(`💳 *Subscription Plan* — Current: *${label}*\nUpgrade with /plans.`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
   }
 });
-bot.command('persona', (ctx: any) => {
+bot.command('persona', (ctx: BotCtx) => {
   const args = (ctx.message as any).text.split(' ').slice(1);
   const id = getUid(ctx);
   if (args[0] === 'set' && args[1] && args[2]) {
@@ -1043,7 +1048,7 @@ bot.command('persona', (ctx: any) => {
     ctx.reply(`🎭 *Brand Persona* — ${persona}\nUse /persona set <key> <value>`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
   }
 });
-bot.command('meta', async (ctx: any) => {
+bot.command('meta', async (ctx: BotCtx) => {
   const msg = (ctx.message as any).text.split(' ').slice(1).join(' ');
   const topic = msg || defaultTopic(ctx);
   const id = getUid(ctx);
@@ -1055,17 +1060,17 @@ bot.command('meta', async (ctx: any) => {
     ctx.reply(`⚠️ Meta generation failed (${e?.message ?? 'error'})`, { reply_markup: followUpRow(topic) } as any);
   }
 });
-bot.command('valuemap', (ctx: any) => ctx.reply('🗺️ *Value Map Generator*\nUsage: /valuemap <product> — or tap 🗺️ Value in 💼 Marketing', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any));
-bot.command('review', (ctx: any) => ctx.reply('✏️ *Content Review*\nUsage: /review — then paste content (guided) or tap ✏️ Review in 💼 Marketing', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any));
-bot.command('growth', (ctx: any) => ctx.reply('📈 *Growth Prompts* — battle-tested prompts for ads, SEO, email, CRO, and content.', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any));
-bot.command('swipe', (ctx: any) => ctx.reply('📂 *Swipe Files* — hooks, headlines, and angles ready to copy/paste.', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any));
-bot.command('workflow', (ctx: any) => proGate(ctx, () => ctx.reply('⚙️ *Automation Workflows* — trigger actions based on stage changes or reminders. See ⚙️ Settings → ⚡ Automation Rules.', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any)));
+bot.command('valuemap', (ctx: BotCtx) => ctx.reply('🗺️ *Value Map Generator*\nUsage: /valuemap <product> — or tap 🗺️ Value in 💼 Marketing', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any));
+bot.command('review', (ctx: BotCtx) => ctx.reply('✏️ *Content Review*\nUsage: /review — then paste content (guided) or tap ✏️ Review in 💼 Marketing', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any));
+bot.command('growth', (ctx: BotCtx) => ctx.reply('📈 *Growth Prompts* — battle-tested prompts for ads, SEO, email, CRO, and content.', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any));
+bot.command('swipe', (ctx: BotCtx) => ctx.reply('📂 *Swipe Files* — hooks, headlines, and angles ready to copy/paste.', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any));
+bot.command('workflow', (ctx: BotCtx) => proGate(ctx, () => ctx.reply('⚙️ *Automation Workflows* — trigger actions based on stage changes or reminders. See ⚙️ Settings → ⚡ Automation Rules.', { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any)));
 
-function withTopic(ctx: any): string {
+function withTopic(ctx: BotCtx): string {
   return (ctx.message as any).text.split(' ').slice(1).join(' ').trim();
 }
 
-bot.command('content', async (ctx: any) => {
+bot.command('content', async (ctx: BotCtx) => {
   await proGate(ctx, async () => {
     const topic = withTopic(ctx) || defaultTopic(ctx);
     const id = getUid(ctx);
@@ -1078,7 +1083,7 @@ bot.command('content', async (ctx: any) => {
     }
   });
 });
-bot.command('campaign', async (ctx: any) => {
+bot.command('campaign', async (ctx: BotCtx) => {
   await proGate(ctx, async () => {
     const topic = withTopic(ctx) || defaultTopic(ctx);
     const id = getUid(ctx);
@@ -1091,7 +1096,7 @@ bot.command('campaign', async (ctx: any) => {
     }
   });
 });
-bot.command('keywords', async (ctx: any) => {
+bot.command('keywords', async (ctx: BotCtx) => {
   await proGate(ctx, async () => {
     const topic = withTopic(ctx) || defaultTopic(ctx);
     const id = getUid(ctx);
@@ -1104,7 +1109,7 @@ bot.command('keywords', async (ctx: any) => {
     }
   });
 });
-bot.command('leadmagnet', async (ctx: any) => {
+bot.command('leadmagnet', async (ctx: BotCtx) => {
   await proGate(ctx, async () => {
     const topic = withTopic(ctx) || defaultTopic(ctx);
     const id = getUid(ctx);
@@ -1120,7 +1125,7 @@ bot.command('leadmagnet', async (ctx: any) => {
 
 // ---------- /plans (EzyAi-style pricing) ------------------------------------------
 
-function currentLabel(ctx: any): string {
+function currentLabel(ctx: BotCtx): string {
   const id = getUid(ctx);
   const acc = id ? getAccountByProviderKey('telegram', id) : undefined;
   if (acc && tierIndex(acc.plan) > 0) {
@@ -1139,21 +1144,21 @@ function plansInline(): any {
   };
 }
 
-function sendPlansMessage(ctx: any, label: string) {
+function sendPlansMessage(ctx: Context, label: string) {
   const plansText = PLANS.map((p) => `\n*${p.label}* — ${p.price}\n• ${p.features}`).join('\n');
   ctx.reply(`💳 *Plans*\nCurrent: *${label}*${plansText}\n\nTap a plan to pay securely by card (or choose USDT), claim your free trial, or redeem a code.`, { parse_mode: 'Markdown', reply_markup: plansInline() } as any);
 }
 
-bot.command('plans', (ctx: any) => {
+bot.command('plans', (ctx: BotCtx) => {
   sendPlansMessage(ctx, currentLabel(ctx));
 });
 
-bot.action('plans_back', async (ctx: any) => {
+bot.action('plans_back', async (ctx: BotCtx) => {
   await ctx.answerCbQuery();
   await ctx.editMessageText(`💳 *Plans*\nCurrent: *${currentLabel(ctx)}*`, { parse_mode: 'Markdown', reply_markup: plansInline() } as any);
 });
 
-bot.action(/^plan_/, async (ctx: any) => {
+bot.action(/^plan_/, async (ctx: BotCtx) => {
   const tier = (ctx.match?.[0] as string).replace('plan_', '');
   const id = getUid(ctx);
   if (!isTier(tier) || tier === 'free') {
@@ -1186,7 +1191,7 @@ bot.action(/^plan_/, async (ctx: any) => {
   await ctx.editMessageText('❌ Could not start checkout. Try again shortly.', { reply_markup: plansInline() } as any);
 });
 
-bot.action(/^pay_usdt_/, async (ctx: any) => {
+bot.action(/^pay_usdt_/, async (ctx: BotCtx) => {
   const tier = (ctx.match?.[0] as string).replace('pay_usdt_', '');
   const p = PLANS.find((x) => x.tier === tier);
   const address = process.env.USDT_ADDRESS;
@@ -1200,7 +1205,7 @@ bot.action(/^pay_usdt_/, async (ctx: any) => {
 
 // ---------- Admin: confirm a USDT / manual payment ----------
 
-bot.command('confirmpay', (ctx: any) => {
+bot.command('confirmpay', (ctx: BotCtx) => {
   const adm = getUid(ctx);
   if (!isAdmin(adm)) {
     ctx.reply('⛔ Admin only.', showMenu(ctx, 'main') as any);
@@ -1231,7 +1236,7 @@ bot.command('confirmpay', (ctx: any) => {
   ctx.reply(`✅ Activated *${PLANS.find((x) => x.tier === tier)?.label || tier}* for Telegram id *${uid}* until ${new Date(updated.planUntil || '').toDateString()}.`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
 });
 
-bot.action('redeem_prompt', async (ctx: any) => {
+bot.action('redeem_prompt', async (ctx: BotCtx) => {
   const id = getUid(ctx);
   await ctx.answerCbQuery('Send your code...');
   if (id) {
@@ -1244,7 +1249,7 @@ bot.action('redeem_prompt', async (ctx: any) => {
 
 // ---------- /redeem CODE -----------------------------------------------------------
 
-function redeemCode(ctx: any, code: string): boolean {
+function redeemCode(ctx: Context, code: string): boolean {
   const id = getUid(ctx);
   const c = String(code || '').toUpperCase().trim();
   if (!c) {
@@ -1288,14 +1293,14 @@ function redeemCode(ctx: any, code: string): boolean {
   }
   return true;
 }
-bot.command('redeem', (ctx: any) => {
+bot.command('redeem', (ctx: BotCtx) => {
   const code = (ctx.message as any).text.split(' ').slice(1)[0];
   redeemCode(ctx, code);
 });
 
 // ---------- Admin monetization -------------------------------------------------------
 
-bot.command('mkcode', (ctx: any) => {
+bot.command('mkcode', (ctx: BotCtx) => {
   if (!isAdmin(getUid(ctx))) { ctx.reply('⛔ Admin only.', showMenu(ctx, 'main') as any); return; }
   const args = (ctx.message as any).text.split(' ').slice(1);
   const codes = userState.__codes || {};
@@ -1328,14 +1333,14 @@ bot.command('mkcode', (ctx: any) => {
   ctx.reply(`✅ Created *${created}* code(s):\n${newCodes.join('\n')}\n\nCustomers redeem with /redeem CODE`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
 });
 
-bot.command('codes', (ctx: any) => {
+bot.command('codes', (ctx: BotCtx) => {
   if (!isAdmin(getUid(ctx))) { ctx.reply('⛔ Admin only.', showMenu(ctx, 'main') as any); return; }
   const codes = userState.__codes || {};
   const list = Object.entries(codes).map(([code, e]: any) => `• *${code}* — ${e.kind === 'trial' ? `${e.days}d trial` : `${e.months || 1}mo`} · uses ${(e.usedBy || []).length}/${e.uses || 1}`).join('\n');
   ctx.reply(`🗂️ *Active codes*\n${list || 'None yet. Create with /mkcode'}`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
 });
 
-bot.command('revokecode', (ctx: any) => {
+bot.command('revokecode', (ctx: BotCtx) => {
   if (!isAdmin(getUid(ctx))) { ctx.reply('⛔ Admin only.', showMenu(ctx, 'main') as any); return; }
   const code = (ctx.message as any).text.split(' ').slice(1).join(' ').toUpperCase().trim();
   const codes = userState.__codes || {};
@@ -1346,7 +1351,7 @@ bot.command('revokecode', (ctx: any) => {
   ctx.reply(`♻️ Code *${code}* revoked.`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
 });
 
-bot.command('settrial', (ctx: any) => {
+bot.command('settrial', (ctx: BotCtx) => {
   if (!isAdmin(getUid(ctx))) { ctx.reply('⛔ Admin only.', showMenu(ctx, 'main') as any); return; }
   const days = parseInt((ctx.message as any).text.split(' ').slice(1)[0]);
   if (days) {
@@ -1360,7 +1365,7 @@ bot.command('settrial', (ctx: any) => {
 
 // ---------- /admin overview ------------------------------------------------------------
 
-bot.command('admin', (ctx: any) => {
+bot.command('admin', (ctx: BotCtx) => {
   if (!isAdmin(getUid(ctx))) { ctx.reply('⛔ Admin only.', showMenu(ctx, 'main') as any); return; }
   const ids = Object.keys(userState).filter((k) => /^\d{6,}$/.test(k));
   const proUsers = ids.filter((k) => isPayingUser(k)).length;
@@ -1377,7 +1382,7 @@ bot.command('admin', (ctx: any) => {
 
 // ---------- Plan / trial inline callbacks ----------------------------------------------
 
-bot.action(/^plan_/, async (ctx: any) => {
+bot.action(/^plan_/, async (ctx: BotCtx) => {
   const tier = (ctx.match?.[0] as string).replace('plan_', '');
   const id = getUid(ctx);
   await ctx.answerCbQuery(`Plan: ${tier}`);
@@ -1390,7 +1395,7 @@ bot.action(/^plan_/, async (ctx: any) => {
   ctx.reply('Done! What next?', showMenu(ctx, 'main') as any);
 });
 
-bot.action('trial_claim', async (ctx: any) => {
+bot.action('trial_claim', async (ctx: BotCtx) => {
   const id = getUid(ctx);
   await ctx.answerCbQuery('Claiming trial...');
   const days = userState.__trialDays || 3;
@@ -1410,7 +1415,7 @@ bot.action('trial_claim', async (ctx: any) => {
 
 // ---------- /help & /dashboard -------------------------------------------------------------
 
-bot.command('help', (ctx: any) => {
+bot.command('help', (ctx: BotCtx) => {
   const helpText =
     `*🧰 TG Ezy AI OS — Marketing Command Center*` +
     `\n\n*Core:* /start · /help · /plans · /dashboard · /inbox` +
@@ -1425,7 +1430,7 @@ bot.command('help', (ctx: any) => {
   ctx.reply(helpText, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
 });
 
-bot.command('dashboard', (ctx: any) => {
+bot.command('dashboard', (ctx: BotCtx) => {
   const port = process.env.PORT || 3000;
   const base = process.env.PUBLIC_URL || `http://localhost:${port}`;
   ctx.reply(`📊 *Marketing Dashboard*\n\nOpen: ${base}/dashboard\n(Expose the app publicly with a PUBLIC_URL to share the link.)`, { parse_mode: 'Markdown', reply_markup: showMenu(ctx, 'main').reply_markup } as any);
@@ -1433,7 +1438,6 @@ bot.command('dashboard', (ctx: any) => {
 
 // ---------- Reminders (persisted across restarts) -------------------------------------
 
-interface StoredReminder { chatId: string; when: number; message: string; }
 
 function storeReminder(chatId: string, when: number, message: string): void {
   const list = userState.__reminders || [];
@@ -1477,9 +1481,9 @@ function restoreReminders(): void {
 
 // ---------- Message flow (guided captures + default AI) -------------------------------
 
-bot.on('text', async (ctx: any) => {
+bot.on('text', async (ctx: BotCtx) => {
   const id = getUid(ctx);
-  const msg = (String(ctx.message.text || '')).trim();
+  const msg = messageText(ctx).trim();
 
   if (buttonTexts.has(msg)) return; // it's a keyboard button (handled by hears)
 
@@ -1633,7 +1637,7 @@ bot.on('text', async (ctx: any) => {
     if (biz?.name || biz?.website || biz?.tone) {
       prompt = `(Business facts: ${[biz.name, biz.website, biz.tone].filter(Boolean).join(', ') || 'none'}.) ${prompt}`;
     }
-    let aiResponse = await safeGenerateResponse(prompt);
+    const aiResponse = await safeGenerateResponse(prompt);
     if (id) {
       userState[id] = userState[id] || {};
       userState[id].aiCount = (userState[id].aiCount || 0) + 1;
@@ -1650,7 +1654,7 @@ bot.on('text', async (ctx: any) => {
 
 // ---------- Broadcast execution (admin) ------------------------------------------------
 
-bot.action('broadcast_confirm', async (ctx: any) => {
+bot.action('broadcast_confirm', async (ctx: BotCtx) => {
   const id = getUid(ctx);
   await ctx.answerCbQuery('Broadcasting...');
   if (!isAdmin(id)) return;
@@ -1669,7 +1673,7 @@ bot.action('broadcast_confirm', async (ctx: any) => {
     try {
       await bot.telegram.sendMessage(uid, `📣 *Broadcast:*\n${msg}`, { parse_mode: 'Markdown' } as any);
       sent++;
-    } catch (e) {
+    } catch {
       // skip unreachable users
     }
   }
@@ -1693,7 +1697,7 @@ process.on('unhandledRejection', (reason) => {
 
 async function launch(): Promise<void> {
   restoreReminders();
-  const ok = await bot.launch();
+  await bot.launch();
   try {
     await bot.telegram.setMyCommands(botCommands as any);
   } catch (e) {
