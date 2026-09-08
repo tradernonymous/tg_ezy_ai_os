@@ -12,7 +12,7 @@
     "lint": "eslint . --ext .ts",
     "test": "npm run tsc && node scripts/run-tests.mjs",
     "postinstall": "prisma skills sync || exit 0",
-    "postbuild": "git add -A && (git diff --cached --quiet || (git commit -m \"chore: auto build\" && git push origin main))"
+    "postbuild": "node scripts/auto-publish.mjs"
   },
   "dependencies": {
     "concurrently": "^8.2.2",
